@@ -1,6 +1,6 @@
 
 
-rdat <- read.csv("/Users/huashuangcheng/Desktop/UWbiostats/Au19/thesis/Soil_moisture_grasslands/Emily_BRT_data_and_code_Feb_2019/Ldry_withANOM_RAC_Feb2017.csv")
+rdat <- read.csv("data/Ldry_withANOM_RAC_Feb2017.csv")
 
 plot(rdat$midsoil_anom,rdat$EVItrend,col="black",
      xlab="")
