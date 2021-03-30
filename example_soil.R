@@ -1,4 +1,6 @@
 
+library(chngpt)
+
 # data loading
 rdat <- read.csv("data/Ldry_withANOM_RAC_Feb2017.csv")
 
@@ -21,7 +23,7 @@ desg=model.matrix(~evap_anom+I(evap_anom^2)
 solve(t(desg) %*% desg)
 
 
-##### steo model
+##### step model
 fit=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)
             +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)
             +deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)
@@ -40,6 +42,38 @@ fit=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)
             est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0)
 
 predict(fit$best.fit)
+
+
+############### error part ################
+
+
+boot.type="perc"
+predictx(fit, boot.type=boot.type, include.intercept=T)
+
+################ error part #############3
+
+
+
+
+ylim=range(rdat[[y.name]]-tmp.1)
+plot (out$xx, out$yy+offset, type="l", ylim=ylim, xlab=xlab, ylab=ylab%.%"*", lwd=lwd, main=type)
+points(dat[[x.name]], dat[[y.name]]-tmp.1, col="gray")
+lines(out$xx, out$yy+offset, lwd=lwd)
+lines(out$xx, out$point.ci[1,]+offset, type="l", col="black", lty=2, lwd=lwd.1)
+lines(out$xx, out$point.ci[2,]+offset, type="l", col="black", lty=2, lwd=lwd.1)
+lines(out$xx, out$simul.ci[1,]+offset, type="l", col="black",    lty=3, lwd=lwd)
+lines(out$xx, out$simul.ci[2,]+offset, type="l", col="black",    lty=3, lwd=lwd)
+lines(out$xx, out$yy+offset, type="l", col="black", lwd=lwd)
+
+
+
+
+
+
+
+
+
+
 
 
 # ploting raw data
