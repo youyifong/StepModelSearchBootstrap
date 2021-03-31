@@ -47,8 +47,7 @@ predict(fit$best.fit)
 ############### error part ################
 
 
-boot.type="perc"
-predictx(fit, boot.type=boot.type, include.intercept=T)
+predictx(fit, boot.ci.type="perc", include.intercept=T)
 
 ################ error part #############3
 
@@ -191,7 +190,3 @@ fit
 fit.more<-as.data.frame(summary(fit)[1])
 last<-length(fit.more$coefficients.p.value.)
 rownames(fit.more)[which(fit.more$coefficients.p.value.==max(fit.more$coefficients.p.value.[-last]))]
-
-
-
-
