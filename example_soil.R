@@ -41,40 +41,66 @@ fit=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)
             formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
             est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0)
 
-predict(fit$best.fit)
 
 
-############### error part ################
+
+#### scaled step model
+sdat <- rdat
+# scaling, except midsoil_anom & EVI
+sdat$evap_anom <- scale(rdat$evap_anom)
+sdat$topsoil_anom <- scale(rdat$topsoil_anom)
+sdat$deepsoil_anom <- scale(rdat$deepsoil_anom)
+sdat$Mean_cattle_density <- scale(rdat$Mean_cattle_density)
+sdat$s0_trend <- scale(rdat$s0_trend)
+sdat$sd_trend <- scale(rdat$sd_trend)
+sdat$ss_trend <- scale(rdat$ss_trend)
+sdat$e0_trend <- scale(rdat$e0_trend)
+sdat$c3_c4ratio <- scale(rdat$c3_c4ratio)
+sdat$AHGF_FPC <- scale(rdat$AHGF_FPC)
+sdat$Dryag_prop <- scale(rdat$Dryag_prop)
+sdat$Irriag_prop <- scale(rdat$Irriag_prop)
+
+# model fit
+fit=chngptm(formula.1=EVItrend~evap_anom
+            +topsoil_anom
+            +deepsoil_anom
+            +Mean_cattle_density
+            +s0_trend
+            +sd_trend
+            +ss_trend
+            +e0_trend
+            +c3_c4ratio
+            +Dryag_prop
+            +Irriag_prop
+            +AHGF_FPC
+            #+racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
+            ,
+            formula.2=~midsoil_anom, sdat, type="step", family="gaussian",
+            est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0)
 
 
-scale(rdat$evap_anom)
 
 out<-predictx(fit, boot.ci.type="perc", include.intercept=T)
 offset=0
-
-################ error part ##############
-fit$best.fit$coefficients[contain(names(fit$coefficients),"midsoil_anom")]=0 # change point set to 0
-fit$best.fit$coefficients[1]=0# intercept
-tmp.1=predict(fit, rdat)
-
-length(rdat$AHGF_FPC)
-length(tmp.1)
-
-ylim=range(rdat$EVItrend-tmp.1,na.rm = T)
-ylim=range(0,0.02)
-plot (out$xx, out$yy+offset, type="l", ylim=ylim, xlab="", ylab="", lwd=1, main="")
-points(rdat$midsoil_anom, rdat$EVItrend-tmp.1, col="gray")
 lwd=1
 lwd.1=1
+
+fit$best.fit$coefficients[contain(names(fit$coefficients),"midsoil_anom")]=0 # change point set to 0
+fit$best.fit$coefficients[1]=0 # intercept set to be 0
+tmp.1=predict(fit, sdat) # after change point and intercept=0, fitted values of all Zs
+
+
+ylim=range(sdat$EVItrend-tmp.1,na.rm = T)
+plot (out$xx, out$yy+offset, type="l", ylim=ylim, xlab="", ylab="", lwd=1, main="")
+points(sdat$midsoil_anom, rdat$EVItrend-tmp.1, col="gray")
+
 
 lines(out$xx, out$yy+offset, lwd=lwd)
 lines(out$xx, out$point.ci[1,]+offset, type="l", col="red", lty=2, lwd=lwd.1)
 lines(out$xx, out$point.ci[2,]+offset, type="l", col="red", lty=2, lwd=lwd.1)
 lines(out$xx, out$simul.ci[1,]+offset, type="l", col="red",    lty=3, lwd=lwd)
-lines(out$xx, out$simul.ci[2,]+offset, type="l", col="black",    lty=3, lwd=lwd)
+lines(out$xx, out$simul.ci[2,]+offset, type="l", col="red",    lty=3, lwd=lwd)
 lines(out$xx, out$yy+offset, type="l", col="black", lwd=lwd)
-
-
 
 
 
