@@ -80,7 +80,7 @@ tmp.1=predict(fit, rdat) # after change point and intercept=0, fitted values of 
 out<-predictx(fit, boot.ci.type="perc", include.intercept=T)
 offset=0
 
-ylim=quantile(rdat$EVItrend-tmp.1,c(.05,.95), na.rm = T)
+ylim=quantile(rdat$EVItrend-tmp.1,c(.02,.98), na.rm = T)
 plot (out$xx, out$yy+offset, type="l", ylim=ylim, xlab="", ylab="", lwd=1, main="")
 points(rdat$midsoil_anom, rdat$EVItrend-tmp.1, col="gray")
 lwd=1
