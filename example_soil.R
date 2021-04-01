@@ -26,9 +26,10 @@ desg=model.matrix(~evap_anom+I(evap_anom^2)
 solve(t(desg) %*% desg)
 
 
-##### step model
+##### step models
+
 # 3 degrees of freedom for each variable
-fit=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)
+fit.1=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)
             +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)
             +deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)
             +Mean_cattle_density+I(Mean_cattle_density^2)+I(Mean_cattle_density^3)
@@ -46,14 +47,36 @@ fit=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)
             est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0)
 
 
+# 1 degree of freedom for each variable
+fit.2=chngptm(formula.1=EVItrend~evap_anom
+            +topsoil_anom
+            +deepsoil_anom
+            +Mean_cattle_density
+            +s0_trend
+            +sd_trend
+            +ss_trend
+            +e0_trend
+            +c3_c4ratio
+            +Dryag_prop
+            +Irriag_prop
+            +AHGF_FPC
+            #+racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
+            ,
+            formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
+            est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0)
+
+
+# switch between fit.1 and fit.2
+#fit=fit.1
+fit=fit.2
+
 plot(fit)
 summary(fit)
 
 
 fit$best.fit$coefficients[contain(names(fit$coefficients),"midsoil_anom")]=0 # change point set to 0
 fit$best.fit$coefficients[1]=0 # intercept set to be 0
-tmp.1=predict(fit, sdat) # after change point and intercept=0, fitted values of all Zs
-
+tmp.1=predict(fit, rdat) # after change point and intercept=0, fitted values of all Zs
 out<-predictx(fit, boot.ci.type="perc", include.intercept=T)
 offset=0
 
