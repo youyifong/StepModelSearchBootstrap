@@ -18,7 +18,7 @@ desg=model.matrix(~evap_anom+I(evap_anom^2)
                   +Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)
                   +Irriag_prop+I(Irriag_prop^2)+I(Irriag_prop^3)
                   +AHGF_FPC+I(AHGF_FPC^2)+I(AHGF_FPC^3)
-                  +racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
+                  #+racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
                   , rdat)
 solve(t(desg) %*% desg)
 
@@ -36,7 +36,7 @@ fit=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)
             +Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)
             +Irriag_prop+I(Irriag_prop^2)+I(Irriag_prop^3)
             +AHGF_FPC+I(AHGF_FPC^2)+I(AHGF_FPC^3)
-            +racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
+            #+racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
             ,
             formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
             est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0)
@@ -47,20 +47,30 @@ predict(fit$best.fit)
 ############### error part ################
 
 
-predictx(fit, boot.ci.type="perc", include.intercept=T)
+scale(rdat$evap_anom)
 
-################ error part #############3
+out<-predictx(fit, boot.ci.type="perc", include.intercept=T)
+offset=0
 
+################ error part ##############
+fit$best.fit$coefficients[contain(names(fit$coefficients),"midsoil_anom")]=0 # change point set to 0
+fit$best.fit$coefficients[1]=0# intercept
+tmp.1=predict(fit, rdat)
 
+length(rdat$AHGF_FPC)
+length(tmp.1)
 
+ylim=range(rdat$EVItrend-tmp.1,na.rm = T)
+ylim=range(0,0.02)
+plot (out$xx, out$yy+offset, type="l", ylim=ylim, xlab="", ylab="", lwd=1, main="")
+points(rdat$midsoil_anom, rdat$EVItrend-tmp.1, col="gray")
+lwd=1
+lwd.1=1
 
-ylim=range(rdat[[y.name]]-tmp.1)
-plot (out$xx, out$yy+offset, type="l", ylim=ylim, xlab=xlab, ylab=ylab%.%"*", lwd=lwd, main=type)
-points(dat[[x.name]], dat[[y.name]]-tmp.1, col="gray")
 lines(out$xx, out$yy+offset, lwd=lwd)
-lines(out$xx, out$point.ci[1,]+offset, type="l", col="black", lty=2, lwd=lwd.1)
-lines(out$xx, out$point.ci[2,]+offset, type="l", col="black", lty=2, lwd=lwd.1)
-lines(out$xx, out$simul.ci[1,]+offset, type="l", col="black",    lty=3, lwd=lwd)
+lines(out$xx, out$point.ci[1,]+offset, type="l", col="red", lty=2, lwd=lwd.1)
+lines(out$xx, out$point.ci[2,]+offset, type="l", col="red", lty=2, lwd=lwd.1)
+lines(out$xx, out$simul.ci[1,]+offset, type="l", col="red",    lty=3, lwd=lwd)
 lines(out$xx, out$simul.ci[2,]+offset, type="l", col="black",    lty=3, lwd=lwd)
 lines(out$xx, out$yy+offset, type="l", col="black", lwd=lwd)
 
