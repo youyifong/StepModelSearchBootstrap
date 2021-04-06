@@ -89,7 +89,7 @@ for (i in 1:2) { # 1 is M111 and 2 is step
         lines(out$xx[out$xx>fit$chngpt], out$point.ci[2,out$xx>fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
     }
 }
-mydev.off(file="figures/soil_moisture_bootstrap_lines")
+mydev.off(file="figures/soil_moisture_threshold_model_fits")
 
 
 
