@@ -9,6 +9,11 @@ rdat <- read.csv("data/Ldry_withANOM_RAC_Feb2017.csv")
 # scale covariates
 for (a in names(rdat)[c(2,4:15)]) rdat[[a]]=scale(rdat[[a]] )
 
+
+
+###########################################################################################
+
+
 # step model
 fit.4=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(evap_anom^4)
             +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)+I(topsoil_anom^4)
@@ -48,9 +53,7 @@ save(fit.4.m111, file="fit.4.m111.Rdata")
 plot(fit.4.m111)
 
 
-###########################################################################################
 #
-
 load(file="fit.4.m111.Rdata")
 
 
@@ -93,27 +96,29 @@ mydev.off(file="figures/soil_moisture_bootstrap_lines")
 #################################################################################################
 # more fits
 
-## This is not needed if we do scaling
-## checking singularity
-#desg=model.matrix(~evap_anom+I(evap_anom^2)
-#                  +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)
-#                  +deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)
-#                  +Mean_cattle_density
-#                  +s0_trend+I(s0_trend^2)+I(s0_trend^3)
-#                  +sd_trend+I(sd_trend^2)+I(sd_trend^3)
-#                  +ss_trend+I(ss_trend^2)+I(ss_trend^3)
-#                  +e0_trend+I(e0_trend^2)
-#                  +c3_c4ratio+I(c3_c4ratio^2)+I(c3_c4ratio^3)
-#                  +Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)
-#                  +Irriag_prop+I(Irriag_prop^2)+I(Irriag_prop^3)
-#                  +AHGF_FPC+I(AHGF_FPC^2)+I(AHGF_FPC^3)
-#                  #+racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
-#                  , rdat)
-#solve(t(desg) %*% desg)
+##### for step models, allowing 1 or 2 df in the covariates leads to similar chngpt estimates, 
+# allowing 3 df and 4 df leads to similar chngpt estimates. 
+# but 3 df and 4 df differ in that under 3 df, there are bootstrap replicates in which the estimated jump is negative
 
 
-##### step models
-# 1 df and 2 df results similar, 3 df and 4 df results are similar
+# checking singularity
+# not needed if we do scaling and use polynomial basis functions
+desg=model.matrix(~evap_anom+I(evap_anom^2)
+                  +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)
+                  +deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)
+                  +Mean_cattle_density
+                  +s0_trend+I(s0_trend^2)+I(s0_trend^3)
+                  +sd_trend+I(sd_trend^2)+I(sd_trend^3)
+                  +ss_trend+I(ss_trend^2)+I(ss_trend^3)
+                  +e0_trend+I(e0_trend^2)
+                  +c3_c4ratio+I(c3_c4ratio^2)+I(c3_c4ratio^3)
+                  +Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)
+                  +Irriag_prop+I(Irriag_prop^2)+I(Irriag_prop^3)
+                  +AHGF_FPC+I(AHGF_FPC^2)+I(AHGF_FPC^3)
+                  #+racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
+                  , rdat)
+solve(t(desg) %*% desg)
+
 
 # 3 degrees of freedom for each variable
 fit.1==chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)
