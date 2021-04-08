@@ -147,8 +147,43 @@ for (i in 1:2) {
 mydev.off(file="figures/soil_moisture_threshold_model_fits")
 
 
+
+
 ###########################################################################################
 
+myfigure(width=10, height=10)
+    mypairs(rdat[,1:15], show.data.cloud = F)
+mydev.off(file="figures/pairs")
+
+
+
+
+
+
+#################################################################################################
+# more fits
+# for step models, allowing 1 or 2 df in the covariates leads to similar chngpt estimates, 
+# allowing 3 df and 4 df leads to similar chngpt estimates. 
+# but 3 df and 4 df differ in that under 3 df, there are bootstrap replicates in which the estimated jump is negative
+
+
+# checking singularity
+# not needed if we do scaling and use polynomial basis functions
+desg=model.matrix(~evap_anom+I(evap_anom^2)
+                  +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)
+                  +deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)
+                  +Mean_cattle_density
+                  +s0_trend+I(s0_trend^2)+I(s0_trend^3)
+                  +sd_trend+I(sd_trend^2)+I(sd_trend^3)
+                  +ss_trend+I(ss_trend^2)+I(ss_trend^3)
+                  +e0_trend+I(e0_trend^2)
+                  +c3_c4ratio+I(c3_c4ratio^2)+I(c3_c4ratio^3)
+                  +Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)
+                  +Irriag_prop+I(Irriag_prop^2)+I(Irriag_prop^3)
+                  +AHGF_FPC+I(AHGF_FPC^2)+I(AHGF_FPC^3)
+                  #+racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
+                  , rdat)
+solve(t(desg) %*% desg)
 
 
 # step model
@@ -186,9 +221,6 @@ fit.gam.1=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(e
 
 
 
-#######################################################
-# M111 models may take too long to run on a laptop
-
 fit.4.m111=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(evap_anom^4)
             +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)+I(topsoil_anom^4)
             +deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)+I(deepsoil_anom^4)
@@ -204,122 +236,6 @@ fit.4.m111=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(
             ,
             formula.2=~midsoil_anom, rdat, type="M111", family="gaussian",
             est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=500)
-save(fit.4.m111, file="fit.4.m111.Rdata")
-
-
-
-
-#######################################################
-load(file="fit.4.m111.Rdata")
-load(file="fit.gam.m111.Rdata")
-
-
-myfigure(mfrow=c(1,2))
-for (i in 1:2) { # 1 is M111 and 2 is step
-    if(i==1) fit=fit.4.m111 else fit=fit.4    
-    
-    #
-    out<-predictx(fit, boot.ci.type="perc", include.intercept=T, return.boot=T)
-    fit$best.fit$coefficients[contain(names(fit$coefficients),"midsoil_anom")]=0 # change point set to 0
-    fit$best.fit$coefficients[1]=0 # intercept set to be 0
-    tmp.1=predict(fit, rdat) # after change point and intercept=0, fitted values of all Zs
-    offset=0
-    
-    ylim=quantile(rdat$EVItrend-tmp.1, c(0.005,1))
-    
-    plot(rdat$midsoil_anom, rdat$EVItrend-tmp.1, type="p", xlab="Mid soil moisture layer anomaly", ylab="EVItrend partial response", main=ifelse(i==1,"3-phase","Step")%.%" Model Fit", col="gray", cex=.5, ylim=ylim)
-    ## plot bootstrap replicates
-    #for(i in 1:10) lines(out$xx, out$boot[,i]+offset, type="l")
-    
-    if (i==1) {
-        lines(out$xx, out$yy+offset, lwd=2, col=2)
-        lines(out$xx, out$point.ci[1,]+offset, type="l", col=2, lty=2, lwd=1)
-        lines(out$xx, out$point.ci[2,]+offset, type="l", col=2, lty=2, lwd=1)
-    } else  {
-        # to plot discontinuous lines, we will do it in two steps
-        lines(out$xx[out$xx<=fit$chngpt], out$yy[out$xx<=fit$chngpt]+offset, lwd=2, col=2)
-        lines(out$xx[out$xx<=fit$chngpt], out$point.ci[1,out$xx<=fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-        lines(out$xx[out$xx<=fit$chngpt], out$point.ci[2,out$xx<=fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-        #
-        lines(out$xx[out$xx>fit$chngpt], out$yy[out$xx>fit$chngpt]+offset, lwd=2, col=2)
-        lines(out$xx[out$xx>fit$chngpt], out$point.ci[1,out$xx>fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-        lines(out$xx[out$xx>fit$chngpt], out$point.ci[2,out$xx>fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-    }
-}
-
-
-
-myfigure(mfrow=c(1,2))
-for (i in 1:2) { # 1 is M111 and 2 is step
-    if(i==1) fit=fit.gam.m111 else fit=fit.gam.1  
-    
-    #
-    out<-predictx(fit, boot.ci.type="perc", include.intercept=T, return.boot=T)
-    fit$best.fit$coefficients[contain(names(fit$coefficients),"midsoil_anom")]=0 # change point set to 0
-    fit$best.fit$coefficients[1]=0 # intercept set to be 0
-    tmp.1=predict(fit, rdat) # after change point and intercept=0, fitted values of all Zs
-    offset=0
-    
-    ylim=quantile(rdat$EVItrend-tmp.1, c(0.005,1))
-    
-    plot(rdat$midsoil_anom, rdat$EVItrend-tmp.1, type="p", xlab="Mid soil moisture layer anomaly", ylab="EVItrend partial response", main=ifelse(i==1,"3-phase","Step")%.%" Model Fit", col="gray", cex=.5, ylim=ylim)
-    ## plot bootstrap replicates
-    #for(i in 1:10) lines(out$xx, out$boot[,i]+offset, type="l")
-    
-    if (i==1) {
-        lines(out$xx, out$yy+offset, lwd=2, col=2)
-        lines(out$xx, out$point.ci[1,]+offset, type="l", col=2, lty=2, lwd=1)
-        lines(out$xx, out$point.ci[2,]+offset, type="l", col=2, lty=2, lwd=1)
-    } else  {
-        # to plot discontinuous lines, we will do it in two steps
-        lines(out$xx[out$xx<=fit$chngpt], out$yy[out$xx<=fit$chngpt]+offset, lwd=2, col=2)
-        lines(out$xx[out$xx<=fit$chngpt], out$point.ci[1,out$xx<=fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-        lines(out$xx[out$xx<=fit$chngpt], out$point.ci[2,out$xx<=fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-        #
-        lines(out$xx[out$xx>fit$chngpt], out$yy[out$xx>fit$chngpt]+offset, lwd=2, col=2)
-        lines(out$xx[out$xx>fit$chngpt], out$point.ci[1,out$xx>fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-        lines(out$xx[out$xx>fit$chngpt], out$point.ci[2,out$xx>fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-    }
-}
-
-
-
-###########################################################################################
-
-myfigure(width=10, height=10)
-    mypairs(rdat[,1:15], show.data.cloud = F)
-mydev.off(file="figures/pairs")
-
-
-
-
-
-
-#################################################################################################
-# more fits
-
-##### for step models, allowing 1 or 2 df in the covariates leads to similar chngpt estimates, 
-# allowing 3 df and 4 df leads to similar chngpt estimates. 
-# but 3 df and 4 df differ in that under 3 df, there are bootstrap replicates in which the estimated jump is negative
-
-
-# checking singularity
-# not needed if we do scaling and use polynomial basis functions
-desg=model.matrix(~evap_anom+I(evap_anom^2)
-                  +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)
-                  +deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)
-                  +Mean_cattle_density
-                  +s0_trend+I(s0_trend^2)+I(s0_trend^3)
-                  +sd_trend+I(sd_trend^2)+I(sd_trend^3)
-                  +ss_trend+I(ss_trend^2)+I(ss_trend^3)
-                  +e0_trend+I(e0_trend^2)
-                  +c3_c4ratio+I(c3_c4ratio^2)+I(c3_c4ratio^3)
-                  +Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)
-                  +Irriag_prop+I(Irriag_prop^2)+I(Irriag_prop^3)
-                  +AHGF_FPC+I(AHGF_FPC^2)+I(AHGF_FPC^3)
-                  #+racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
-                  , rdat)
-solve(t(desg) %*% desg)
 
 
 desg=model.matrix(~ns(evap_anom,7)
