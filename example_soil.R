@@ -27,10 +27,11 @@ fit.gam=mgcv::gam(formula=EVItrend~s(evap_anom, bs="tp")
     +s(midsoil_anom, bs="tp"), rdat, family=gaussian)
 
 summary(fit.gam)
-plot(fit.gam)
+#plot(fit.gam)
 
 
 desg=NULL
+# put together all but mid soil anom
 for (i in 1:12) desg=cbind(desg, Predict.matrix(fit.gam$smooth[[i]], rdat))
 # remove columns responsible for rank deficiency
 desg=cbind(1, desg)
@@ -41,17 +42,73 @@ dat.1=as.data.frame(desg.1)
 dat.1=cbind(dat.1, EVItrend=rdat$EVItrend, midsoil_anom=rdat$midsoil_anom)
 
 
+
+
+###########################################################################################
+# fit.gam.m111 takes about half an hour to run on a fast server
+
+a=Sys.time()
 fit.gam.step=chngptm(formula.1=as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))),
     formula.2=~midsoil_anom, dat.1, type="step", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=500)
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=500, ncpus=30)
+Sys.time()-a
+
 
 fit.gam.m111=chngptm(formula.1=as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))),
     formula.2=~midsoil_anom, dat.1, type="M111", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=500)
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=500, ncpus=30)
+
+
 
 save(fit.gam.step, fit.gam.m111, file="fit.gam.Rdata")
 
 
+stop() # if we run the above on a server to save the fits, we would stop here
+
+
+
+
+###########################################################################################
+# make figure
+
+load(file="fit.gam.Rdata")
+
+myfigure(mfrow=c(1,2))
+for (i in 1:2) { 
+    if(i==1) fit=fit.gam.m111 else fit=fit.gam.step    
+    
+    #
+    out<-predictx(fit, boot.ci.type="perc", include.intercept=T, return.boot=T)
+    fit$best.fit$coefficients[contain(names(fit$coefficients),"midsoil_anom")]=0 # change point set to 0
+    fit$best.fit$coefficients[1]=0 # intercept set to be 0
+    tmp.1=predict(fit, dat.1) # after change point and intercept=0, fitted values of all Zs
+    offset=0
+    
+    ylim=quantile(dat.1$EVItrend-tmp.1, c(0.005,1))
+    
+    plot(dat.1$midsoil_anom, dat.1$EVItrend-tmp.1, type="p", xlab="Mid soil moisture layer anomaly", ylab="EVItrend partial response", main=ifelse(i==1,"3-phase","Step")%.%" Model Fit", col="gray", cex=.5, ylim=ylim)
+    ## plot bootstrap replicates
+    #for(i in 1:10) lines(out$xx, out$boot[,i]+offset, type="l")
+    
+    if (i==1) {
+        lines(out$xx, out$yy+offset, lwd=2, col=2)
+        lines(out$xx, out$point.ci[1,]+offset, type="l", col=2, lty=2, lwd=1)
+        lines(out$xx, out$point.ci[2,]+offset, type="l", col=2, lty=2, lwd=1)
+    } else  {
+        # to plot discontinuous lines, we will do it in two steps
+        lines(out$xx[out$xx<=fit$chngpt], out$yy[out$xx<=fit$chngpt]+offset, lwd=2, col=2)
+        lines(out$xx[out$xx<=fit$chngpt], out$point.ci[1,out$xx<=fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
+        lines(out$xx[out$xx<=fit$chngpt], out$point.ci[2,out$xx<=fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
+        #
+        lines(out$xx[out$xx>fit$chngpt], out$yy[out$xx>fit$chngpt]+offset, lwd=2, col=2)
+        lines(out$xx[out$xx>fit$chngpt], out$point.ci[1,out$xx>fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
+        lines(out$xx[out$xx>fit$chngpt], out$point.ci[2,out$xx>fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
+    }
+}
+mydev.off(file="figures/soil_moisture_threshold_model_fits")
+
+
+###########################################################################################
 
 
 
