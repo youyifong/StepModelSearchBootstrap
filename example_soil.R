@@ -1,5 +1,5 @@
 library(kyotil)
-library(chngpt)
+library(chngpt); stopifnot(packageVersion("chngpt")>="2021.4-7")
 library(splines)
 library(mgcv); "%.%" <- function (a, b) out=paste(a,b,sep="")
 
@@ -30,9 +30,17 @@ summary(fit.gam)
 #plot(fit.gam)
 
 
-desg=NULL
+
 # put together all but mid soil anom
-for (i in 1:12) desg=cbind(desg, Predict.matrix(fit.gam$smooth[[i]], rdat))
+desg=NULL; for (i in 1:12) desg=cbind(desg, Predict.matrix(fit.gam$smooth[[i]], rdat))
+tmp=cbind(as.data.frame(desg), EVItrend=rdat$EVItrend)
+
+cor(tmp)
+
+fit=lm(as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(tmp)-1)), "+"))), tmp)
+
+summary(fit)$coef[,4]
+
 # remove columns responsible for rank deficiency
 desg=cbind(1, desg)
 tmp=lm.fit(desg, rdat$EVItrend)
@@ -43,20 +51,19 @@ dat.1=cbind(dat.1, EVItrend=rdat$EVItrend, midsoil_anom=rdat$midsoil_anom)
 
 
 
-
 ###########################################################################################
-# fit.gam.m111 takes about half an hour to run on a fast server
+# fit.gam.m111 takes about half an hour to run on a server with many cpus
 
-a=Sys.time()
 fit.gam.step=chngptm(formula.1=as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))),
     formula.2=~midsoil_anom, dat.1, type="step", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=500, ncpus=30)
-Sys.time()-a
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
 
 
+a=Sys.time()
 fit.gam.m111=chngptm(formula.1=as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))),
     formula.2=~midsoil_anom, dat.1, type="M111", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=500, ncpus=30)
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
+print(Sys.time()-a)
 
 
 
