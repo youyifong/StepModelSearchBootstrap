@@ -8,9 +8,7 @@ rdat <- read.csv("data/Ldry_withANOM_RAC_Feb2017.csv")
 # scale all covariates but outcome and predictor of interest
 for (a in names(rdat)[c(2,4:15)]) rdat[[a]]=scale(rdat[[a]] )
 
-
-
-###########################################################################################
+# make dat.1
 
 fit.gam=mgcv::gam(formula=EVItrend~s(evap_anom, bs="tp")
     +s(topsoil_anom, bs="tp")
@@ -24,7 +22,7 @@ fit.gam=mgcv::gam(formula=EVItrend~s(evap_anom, bs="tp")
     +s(Dryag_prop, bs="tp")
     +s(Irriag_prop, bs="tp")
     +s(AHGF_FPC, bs="tp") 
-    +s(midsoil_anom, bs="tp"), rdat, family=gaussian)
+    +s(midsoil_anom, bs="tp"), rdat, family=gaussian, select=T)
 
 summary(fit.gam)
 #plot(fit.gam)
@@ -32,9 +30,9 @@ summary(fit.gam)
 
 
 # put together all but mid soil anom
-desg=NULL; for (i in 1:12) desg=cbind(desg, Predict.matrix(fit.gam$smooth[[i]], rdat))
-tmp=cbind(as.data.frame(desg), EVItrend=rdat$EVItrend)
+desg=NULL; for (i in c(1:5,7:10,12)) desg=cbind(desg, Predict.matrix(fit.gam$smooth[[i]], rdat))
 
+tmp=cbind(as.data.frame(desg), EVItrend=rdat$EVItrend)
 cor(tmp)
 
 fit=lm(as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(tmp)-1)), "+"))), tmp)
@@ -48,7 +46,7 @@ desg.1=desg[, -which(is.na(tmp$coef))]
 if (all(desg.1[,1]==1)) desg.1=desg.1[,-1]
 dat.1=as.data.frame(desg.1)
 dat.1=cbind(dat.1, EVItrend=rdat$EVItrend, midsoil_anom=rdat$midsoil_anom)
-
+dim(dat.1)
 
 
 ###########################################################################################
@@ -58,6 +56,50 @@ fit.gam.step=chngptm(formula.1=as.formula(paste0("EVItrend~", concatList(paste0(
     formula.2=~midsoil_anom, dat.1, type="step", family="gaussian",
     est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
 
+## examine bootstrap
+#set.seed(1)
+#dat.b.1=dat.1[sample(1:nrow(dat.1), replace=T),]
+#fit.gam.step.1=chngptm(formula.1=as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))),
+#    formula.2=~midsoil_anom, dat.b.1, type="step", family="gaussian",
+#    est.method="fastgrid2", var.type="none", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
+#fit.gam.step.1$coef
+#plot(fit.gam.step.1)
+#
+#lm.1 = lm (as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))), dat.b.1)
+#lm.1$coef
+#
+#
+#set.seed(2)
+#dat.b.2=dat.1[sample(1:nrow(dat.1), replace=T),]
+#fit.gam.step.2=chngptm(formula.1=as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))),
+#    formula.2=~midsoil_anom, dat.b.2, type="step", family="gaussian",
+#    est.method="fastgrid2", var.type="none", save.boot=TRUE,verbose = 1, ci.bootstrap.size=510, ncpus=30)
+#fit.gam.step.2$coef
+#plot(fit.gam.step.2)
+#
+#lm.2 = lm (as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))), dat.b.2)
+#lm.2$coef
+#
+#
+#tmp.1=model.matrix(as.formula(paste0("~-1+", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))), dat.1)
+#eigen(crossprod(tmp.1))$values
+#sort(cor(tmp.1))
+#
+#tmp.2=model.matrix(~-1+evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(evap_anom^4)+I(evap_anom^5)+I(evap_anom^6)+I(evap_anom^7)+I(evap_anom^8)
+#                  +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)+I(topsoil_anom^4)+I(topsoil_anom^5)+I(topsoil_anom^6)+I(topsoil_anom^7)+I(topsoil_anom^8)
+#                  +deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)+I(deepsoil_anom^4)+I(deepsoil_anom^5)+I(deepsoil_anom^6)+I(deepsoil_anom^7)+I(deepsoil_anom^8)+I(deepsoil_anom^9)
+#                  +ns(Mean_cattle_density,9)
+#                  +s0_trend+I(s0_trend^2)+I(s0_trend^3)+I(s0_trend^4)+I(s0_trend^5)+I(s0_trend^6)+I(s0_trend^7)+I(s0_trend^8)+I(s0_trend^9)
+#                  +sd_trend+I(sd_trend^2)+I(sd_trend^3)+I(sd_trend^4)
+#                  +ss_trend+I(ss_trend^2)+I(ss_trend^3)+I(ss_trend^4)+I(ss_trend^5)+I(ss_trend^6)+I(ss_trend^7)
+#                  +e0_trend+I(e0_trend^2)+I(e0_trend^3)
+#                  +c3_c4ratio+I(c3_c4ratio^2)+I(c3_c4ratio^3)+I(c3_c4ratio^4)+I(c3_c4ratio^5)+I(c3_c4ratio^6)+I(c3_c4ratio^7)+I(c3_c4ratio^8)
+#                  +Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)+I(Dryag_prop^4)+I(Dryag_prop^5)+I(Dryag_prop^6)+I(Dryag_prop^7)+I(Dryag_prop^8)
+#                  +Irriag_prop+I(Irriag_prop^2)+I(Irriag_prop^3)
+#                  +AHGF_FPC, rdat)
+#eigen(crossprod(tmp.2))$values
+#sort(cor(tmp.2))
+#
 
 fit.gam.m111=chngptm(formula.1=as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))),
     formula.2=~midsoil_anom, dat.1, type="M111", family="gaussian",
@@ -110,13 +152,10 @@ load(file="fit.gam.Rdata")
 
 myfigure(mfrow=c(1,2))
 for (i in 1:2) { 
-    if(i==1) fit=fit.gam.m111.2 else fit=fit.gam.step.2
-    dat=rdat  
-    # the following models have very wide confidence bands
-    #if(i==1) fit=fit.gam.m111 else fit=fit.gam.step
-    #dat=dat.1
+    # choose one
+    dat=dat.1; if(i==1) fit=fit.gam.m111 else fit=fit.gam.step # may have very wide confidence bands
+    #dat=rdat; if(i==1) fit=fit.gam.m111.2 else fit=fit.gam.step.2
     
-    #
     out<-predictx(fit, boot.ci.type="perc", include.intercept=T, return.boot=T)
     fit$best.fit$coefficients[contain(names(fit$coefficients),"midsoil_anom")]=0 # change point set to 0
     fit$best.fit$coefficients[1]=0 # intercept set to be 0
@@ -124,10 +163,11 @@ for (i in 1:2) {
     offset=0
     
     ylim=quantile(dat$EVItrend-tmp.1, c(0.005,1))
+    ylim=range(ylim, out$point.ci)
     
     plot(dat$midsoil_anom, dat$EVItrend-tmp.1, type="p", xlab="Mid soil moisture layer anomaly", ylab="EVItrend partial response", main=ifelse(i==1,"3-phase","Step")%.%" Model Fit", col="gray", cex=.5, ylim=ylim)
-    ## plot bootstrap replicates
-    #for(i in 1:10) lines(out$xx, out$boot[,i]+offset, type="l")
+    # plot bootstrap replicates
+    for(i in 1:10) lines(out$xx, out$boot[,i]+offset, type="l")
     
     if (i==1) {
         lines(out$xx, out$yy+offset, lwd=2, col=2)
@@ -172,7 +212,7 @@ mydev.off(file="figures/pairs")
 desg=model.matrix(~evap_anom+I(evap_anom^2)
                   +topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)
                   +deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)
-                  +Mean_cattle_density
+                  +Mean_cattle_density + I(Mean_cattle_density^2) + I(Mean_cattle_density^3)
                   +s0_trend+I(s0_trend^2)+I(s0_trend^3)
                   +sd_trend+I(sd_trend^2)+I(sd_trend^3)
                   +ss_trend+I(ss_trend^2)+I(ss_trend^3)
@@ -181,7 +221,6 @@ desg=model.matrix(~evap_anom+I(evap_anom^2)
                   +Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)
                   +Irriag_prop+I(Irriag_prop^2)+I(Irriag_prop^3)
                   +AHGF_FPC+I(AHGF_FPC^2)+I(AHGF_FPC^3)
-                  #+racLdry_trend+I(racLdry_trend^2)+I(racLdry_trend^3)
                   , rdat)
 solve(t(desg) %*% desg)
 
@@ -238,20 +277,24 @@ fit.4.m111=chngptm(formula.1=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(
             est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=500)
 
 
-desg=model.matrix(~ns(evap_anom,7)
-    +ns(topsoil_anom,7)
-    +ns(deepsoil_anom,8)
-    +ns(Mean_cattle_density,8)
-    +ns(s0_trend,8)
-    +ns(sd_trend,4)
-    +ns(ss_trend,7)
-    +ns(e0_trend,3)
-    +ns(c3_c4ratio,8)
-    +ns(Dryag_prop,8)
-    +ns(Irriag_prop,3)
-    +ns(AHGF_FPC,1)
-                  , rdat)
+f=EVItrend~ns(evap_anom,7)+
+    ns(topsoil_anom,7)+
+    ns(deepsoil_anom,8)+
+    ns(Mean_cattle_density,8)+
+    ns(s0_trend,8)+
+    ns(sd_trend,4)+
+    ns(ss_trend,7)+
+    ns(e0_trend,3)+
+    ns(c3_c4ratio,8)+
+    ns(Dryag_prop,8)+
+    ns(Irriag_prop,3)+
+    ns(AHGF_FPC,1)
+desg=model.matrix(f, rdat)
 solve(t(desg) %*% desg)
+
+qr(desg)
+
+lm(f, rdat)
 
 
 
