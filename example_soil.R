@@ -38,14 +38,14 @@ coef.ls=lapply(splines, function(spline) {
             fit = lm(as.formula(paste0("EVItrend~", concatList(paste0("V", 1:(ncol(dat.1)-2)), "+"))), dat.1)                        
         }        
         #if(i==1) print(kappa(fit$model[,-1]))
-        coef(fit)  
+        c(coef(fit), pred= predict(fit)[c(1,1000,2000)])
     })
 })
 
 sapply(coef.ls, function(coefs) {
     apply(coefs, 1, sd)
 })
-#                                [,1]         [,2]         [,3]         [,4]         [,5]         [,6]
+#                             Bspline        cubic   polynomial           tp           cr           ps
 #(Intercept)             1.646554e-17 6.696676e-18 1.240017e-18 4.389885e-17 5.114833e-18 1.077478e-15
 #bs(evap_anom, df = df)1 3.217301e-17 7.137325e-18 1.165699e-18 5.757997e-17 5.457445e-18 1.184801e-15
 #bs(evap_anom, df = df)2 1.652568e-17 6.936913e-18 1.635320e-18 4.372872e-18 4.863709e-18 1.054203e-15
@@ -53,6 +53,9 @@ sapply(coef.ls, function(coefs) {
 #bs(evap_anom, df = df)4 1.535321e-17 3.661482e-18 7.948879e-19 3.783920e-18 5.103387e-18 1.065811e-15
 #bs(evap_anom, df = df)5 1.756390e-17 1.428200e-17 1.574817e-19 5.606713e-18 5.036359e-18 1.101058e-15
 #bs(evap_anom, df = df)6 1.538764e-17 2.070934e-18 9.184123e-20 8.243508e-18 4.822884e-18 9.301918e-16
+#pred.1017               6.625734e-05 6.255442e-05 6.574928e-05 6.489913e-05 6.243030e-05 6.539633e-05
+#pred.1290               7.425743e-05 7.462852e-05 7.035062e-05 7.732902e-05 7.430619e-05 6.949756e-05
+#pred.1785               6.151956e-05 6.252486e-05 6.086821e-05 5.970436e-05 6.197959e-05 5.947297e-05
 
 
 
