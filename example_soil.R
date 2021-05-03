@@ -31,45 +31,38 @@ fit.gam=mgcv::gam(formula=EVItrend~s(evap_anom, bs=spline)
 
 summary(fit.gam)
 
-
-# fit.gam.m111.2 needs to be run on a server with many cpus
-
-f=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(evap_anom^4)+I(evap_anom^5)+I(evap_anom^6)+I(evap_anom^7)+I(evap_anom^8)+
+f.2=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(evap_anom^4)+I(evap_anom^5)+I(evap_anom^6)+I(evap_anom^7)+I(evap_anom^8)+
                   topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)+I(topsoil_anom^4)+I(topsoil_anom^5)+I(topsoil_anom^6)+I(topsoil_anom^7)+I(topsoil_anom^8)+
                   deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)+I(deepsoil_anom^4)+I(deepsoil_anom^5)+I(deepsoil_anom^6)+I(deepsoil_anom^7)+I(deepsoil_anom^8)+I(deepsoil_anom^9)+
                   Mean_cattle_density+I(Mean_cattle_density^2)+I(Mean_cattle_density^3)+I(Mean_cattle_density^4)+I(Mean_cattle_density^5)+I(Mean_cattle_density^6)+I(Mean_cattle_density^7)+I(Mean_cattle_density^8)+I(Mean_cattle_density^9)+
                   s0_trend+I(s0_trend^2)+I(s0_trend^3)+I(s0_trend^4)+I(s0_trend^5)+I(s0_trend^6)+I(s0_trend^7)+I(s0_trend^8)+I(s0_trend^9)+
                   sd_trend+I(sd_trend^2)+I(sd_trend^3)+I(sd_trend^4)+
-                  ss_trend+I(ss_trend^2)+I(ss_trend^3)+I(ss_trend^4)+I(ss_trend^5)+I(ss_trend^6)+I(ss_trend^7)+
+                  #ss_trend+I(ss_trend^2)+I(ss_trend^3)+I(ss_trend^4)+I(ss_trend^5)+I(ss_trend^6)+I(ss_trend^7)+
                   e0_trend+I(e0_trend^2)+I(e0_trend^3)+
                   c3_c4ratio+I(c3_c4ratio^2)+I(c3_c4ratio^3)+I(c3_c4ratio^4)+I(c3_c4ratio^5)+I(c3_c4ratio^6)+I(c3_c4ratio^7)+I(c3_c4ratio^8)+
                   Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)+I(Dryag_prop^4)+I(Dryag_prop^5)+I(Dryag_prop^6)+I(Dryag_prop^7)+I(Dryag_prop^8)+
                   Irriag_prop+I(Irriag_prop^2)+I(Irriag_prop^3)+
-                  AHGF_FPC
+                  AHGF_FPC 
 
-fit.lm=lm(f, rdat)                  
-summary(fit.lm)
-
-# this is a model selection step 
-f=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(evap_anom^4)+I(evap_anom^5)+I(evap_anom^6)+
-                  topsoil_anom+I(topsoil_anom^2)+I(topsoil_anom^3)+I(topsoil_anom^4)+I(topsoil_anom^5)+I(topsoil_anom^6)+I(topsoil_anom^7)+
-                  deepsoil_anom+I(deepsoil_anom^2)+I(deepsoil_anom^3)+I(deepsoil_anom^4)+
-                  Mean_cattle_density+I(Mean_cattle_density^2)+
-                  s0_trend+I(s0_trend^2)+I(s0_trend^3)+I(s0_trend^4)+I(s0_trend^5)+I(s0_trend^6)+
-                  ss_trend+I(ss_trend^2)+I(ss_trend^3)+I(ss_trend^4)+
-                  c3_c4ratio+I(c3_c4ratio^2)+I(c3_c4ratio^3)+I(c3_c4ratio^4)+I(c3_c4ratio^5)+I(c3_c4ratio^6)+I(c3_c4ratio^7)+I(c3_c4ratio^8)+
-                  Dryag_prop+I(Dryag_prop^2)+I(Dryag_prop^3)+I(Dryag_prop^4)+I(Dryag_prop^5)+I(Dryag_prop^6)+
-                  AHGF_FPC
+summary(lm(f.2, rdat))
 
 
-fit.gam.step.2=chngptm(formula.1=f, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
+par(mfrow=c(1,2))
+    hist(rdat$ss_trend) # skewed (not obvious how to transform, even without scaling)
+    plot(rdat$ss_trend, rdat$EVItren); lines(loess.smooth(rdat$ss_trend, rdat$EVItren), col=2)
+
+
+fit.gam.step.2=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
     est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
 
-fit.gam.m111.2=chngptm(formula.1=f, formula.2=~midsoil_anom, rdat, type="M111", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
+fit.gam.m111.2=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="M111", family="gaussian",
+    est.method="fastgrid2", var.type="none", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
 
-fit.gam.step.2.sub=chngptm(formula.1=f, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=as.integer(exp(-0.9207 + 0.9804*log(nrow(rdat)))) )
+fit.gam.step.2.sub=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=as.integer(exp(-0.9207 + 0.9804*log(nrow(rdat)))) ) #870
+
+fit.gam.step.2.sub.d=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=1274 ) # m estimated by double bootstrap
 
 
 
@@ -82,13 +75,16 @@ fit.gam.step.1=chngptm(formula.1=f.1, formula.2=~midsoil_anom, rdat, type="step"
     est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
 
 fit.gam.m111.1=chngptm(formula.1=f.1, formula.2=~midsoil_anom, rdat, type="M111", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
+    est.method="fastgrid2", var.type="none", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
 
 fit.gam.step.1.sub=chngptm(formula.1=f.1, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=as.integer(exp(-0.5565 + 0.9961*log(nrow(rdat)))) )
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=as.integer(exp(-0.5565 + 0.9961*log(nrow(rdat)))) ) #1417
+
+fit.gam.step.1.sub.d=chngptm(formula.1=f.1, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=1019 )  # m estimated by double bootstrap
 
 
-save(fit.gam.step.2, fit.gam.step.2.sub, fit.gam.m111.2, fit.gam.step.1, fit.gam.step.1.sub, fit.gam.m111.1, file="fit.gam.Rdata")
+save(fit.gam.step.2, fit.gam.step.2.sub, fit.gam.m111.2, fit.gam.step.1, fit.gam.step.1.sub, fit.gam.m111.1, fit.gam.step.1.sub.d, fit.gam.step.2.sub.d, file="fit.gam.Rdata")
 
 
 stop() # if we run the above on a server to save the fits, we would stop here
@@ -98,37 +94,20 @@ stop() # if we run the above on a server to save the fits, we would stop here
 ###########################################################################################
 # summarize results
 
+
 load(file="fit.gam.Rdata")
 
-
-# comparing CI
-# chngpt
-summary(fit.gam.step.2, boot.type="perc")$chngpt
-summary(fit.gam.step.2, boot.type="symm")$chngpt
-summary(fit.gam.step.2.sub)$chngpt
-# jump
-last(summary(fit.gam.step.2, boot.type="perc")$coef)
-last(summary(fit.gam.step.2, boot.type="symm")$coef)
-last(summary(fit.gam.step.2.sub)$coef)
-
-
-# chngpt
-summary(fit.gam.step.1, boot.type="perc")$chngpt
-summary(fit.gam.step.1, boot.type="symm")$chngpt
-summary(fit.gam.step.1.sub)$chngpt
-# jump
-last(summary(fit.gam.step.1, boot.type="perc")$coef)
-last(summary(fit.gam.step.1, boot.type="symm")$coef)
-last(summary(fit.gam.step.1.sub)$coef)
 
 tabs=list()
 for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
     fit.symm=get("fit.gam.step."%.%idx)
     fit.sub =get("fit.gam.step."%.%idx%.%".sub")
+    fit.subd=get("fit.gam.step."%.%idx%.%".sub.d")
     
     chngpt = cbind(
           perc = summary(fit.symm, boot.type="perc")$chngpt
         , symm = summary(fit.symm, boot.type="symm")$chngpt
+        , subd = summary(fit.subd)$chngpt
         , sub  = summary(fit.sub)$chngpt
     )[c(1,3,4),]    
     tmp.1=formatDouble(chngpt, 2)
@@ -137,44 +116,51 @@ for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
     jump = cbind(
           perc = last(summary(fit.symm, boot.type="perc")$coef)
         , symm = last(summary(fit.symm, boot.type="symm")$coef)
+        , subd = last(summary(fit.subd)$coef)
         , sub  = last(summary(fit.sub)$coef)
     )[c(1,3,4),]
     tmp.2=formatDouble(jump, 5, remove.leading0=F)
     
     tab=rbind(
-      "$\\beta$"=c(tmp.2[1,1], paste0("(", tmp.2[2,], ",", tmp.2[3], ")"))
+      "$\\beta$"=c(tmp.2[1,1], paste0("(", tmp.2[2,], ",", tmp.2[3,], ")"))
       ,
-      "$e$"=c(tmp.1[1,1], paste0("(", tmp.1[2,], ",", tmp.1[3], ")"))
+      "$e$"=c(tmp.1[1,1], paste0("(", tmp.1[2,], ",", tmp.1[3,], ")"))
     )
-    colnames(tab)=c("Estimate", "Efron Percentile", "Efron Symmetric", "Subsampling")
+    colnames(tab)=c("Point estimate", "Efron percentile", "Efron symmetric", "Subsampling-d", "Subsampling-r")
     tabs[[idx]]=tab
 }
 
-tab=rbind(tabs[[1]], tabs[[2]])
+tab=t(rbind(tabs[[2]], tabs[[1]]))[,c(2,1,4,3)]
+# add m
+#tab=cbind("$m$"=c(rep(NA,3),870,1274), tab[,1:2],  "$m$"=c(rep(NA,3),1417,1019), tab[,1:2+2])
+tab
+
 mytex(tab, sanitize.text.function = identity, align="c", file="tables/soil_moisture",
-    add.to.row=list(list(0,2), # insert at the beginning of table, and at the end of, say, the first table
-        c("       \n \\multicolumn{5}{l}{No covariates adjustment} \\\\ \n",
-          "\\hline\n \\multicolumn{5}{l}{With covariates adjustment}\\\\ \n"
-         )
-    )
+    col.headers="  \\hline  &   \n \\multicolumn{"%.%(ncol(tab)/2)%.%"}{c}{With covariates adjustment} & \\multicolumn{"%.%(ncol(tab)/2)%.%"}{c}{Without covariates adjustment}\\\\ \n"
 )
+
+
 
 
 
 # make a plot
 for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
-    myfigure(mfrow=c(1,3))
-    for(i in 1:3) { # left and right 
+    myfigure(mfrow=c(1,4))
+    for(i in 1:4) { # left middle right 
         if(i==1) {
             fit=get("fit.gam.m111."%.%idx)
         } else if(i==2) {
             fit=get("fit.gam.step."%.%idx)
-        } else {
+        } else if(i==3) {
+            fit=get("fit.gam.step."%.%idx%.%".sub.d")
+        } else if(i==4) {
             fit=get("fit.gam.step."%.%idx%.%".sub")
+        } else {
+            stop("")
         }
         dat=rdat
         
-        out<-predictx(fit, boot.ci.type=ifelse(i==2, "symm", "perc"), include.intercept=T, return.boot=T)
+        out<-predictx(fit, boot.ci.type=ifelse(i==2, "symm", "perc"), include.intercept=T, return.boot=T, get.simultaneous=F)
         fit$best.fit$coefficients[contain(names(fit$coefficients),"midsoil_anom")]=0 # change point set to 0
         fit$best.fit$coefficients[1]=0 # intercept set to be 0
         tmp.1=predict(fit, dat) # after change point and intercept=0, fitted values of all Zs
@@ -182,16 +168,17 @@ for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
         
         if(idx==1) ylim=range(quantile(dat$EVItrend-tmp.1, c(0.005,1)), out$point.ci) # use the same ylim for both idx
         
+        titles=c("3-phase Model","Step Model, Efron Symmetric","Step Model, Subsampling-d","Step Model, Subsampling-r")
         plot(dat$midsoil_anom, dat$EVItrend-tmp.1, type="p", xlab="Mid soil moisture layer anomaly", 
             ylab=ifelse(idx==1, "EVItrend", "EVItrend partial response"),
-            main=ifelse(i==1,"3-phase Model",ifelse(i==2,"Step Model, Symm","Step Model, Subsampling")), col="gray", cex=.5, ylim=ylim)
+            main=titles[i], col="gray", cex=.5, ylim=ylim)
         # plot bootstrap replicates
         #for(i in 1:10) lines(out$xx, out$boot[,i]+offset, type="l")
         
         if (i==1) {
             lines(out$xx, out$yy+offset, lwd=2, col=2)
-            lines(out$xx, out$point.ci[1,]+offset, type="l", col=2, lty=2, lwd=1)
-            lines(out$xx, out$point.ci[2,]+offset, type="l", col=2, lty=2, lwd=1)
+            #lines(out$xx, out$point.ci[1,]+offset, type="l", col=2, lty=2, lwd=1)
+            #lines(out$xx, out$point.ci[2,]+offset, type="l", col=2, lty=2, lwd=1)
         } else  {
             # to plot discontinuous lines, we will do it in two steps
             lines(out$xx[out$xx<=fit$chngpt], out$yy[out$xx<=fit$chngpt]+offset, lwd=2, col=2)

@@ -1,21 +1,101 @@
-\documentclass{article}
 
+\documentclass{article}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{geometry}
 
+%TCIDATA{OutputFilter=Latex.dll}
+%TCIDATA{Version=5.50.0.2960}
+%TCIDATA{<META NAME="SaveForMode" CONTENT="1">}
+%TCIDATA{BibliographyScheme=Manual}
+%TCIDATA{LastRevised=Sunday, May 02, 2021 18:16:50}
+%TCIDATA{<META NAME="GraphicsSave" CONTENT="32">}
+
+\input{tcilatex}
+
 \begin{document}
+
+
 \begin{tabular}{lcccc}
-   \hline  & Estimate& Efron Percentile& Efron Symmetric& Subsampling\\ 
 \hline
-        
- \multicolumn{5}{l}{No covariate adjustment} \\ 
-$\beta$ & 0.00065 & (0.00058,0.00070) & (0.00058,0.00070) & (0.00058,0.00070) \\ 
-  $e$ & -0.29 & (-0.30,-0.26) & (-0.32,-0.26) & (-0.30,-0.26) \\ 
-   \hline
- \multicolumn{5}{l}{With covariate adjustment}\\ 
-$\beta$ &  0.00023 & ( 0.00016, 0.00031) & ( 0.00015, 0.00031) & (-0.00018, 0.00031) \\ 
-  $e$ & -0.26 & (-0.32,-0.25) & (-0.31,-0.25) & (-0.32,-0.25) \\ 
-   \hline
+& \multicolumn{2}{c}{With covariates adjustment} & \multicolumn{2}{c}{
+Without covariates adjustment} \\ 
+& $e$ & $\beta $ & $e$ & $\beta $ \\ \hline
+Point estimate & -0.26 & 0.00025 & -0.29 & 0.00065 \\ 
+Efron percentile & (-0.31,-0.25) & (0.00019,0.00032) & (-0.30,-0.26) & 
+(0.00058,0.00070) \\ 
+Efron symmetric & (-0.29,-0.23) & (0.00019,0.00032) & (-0.32,-0.26) & 
+(0.00058,0.00072) \\ 
+Subsampling-d & (-0.32,-0.25) & (0.00017,0.00031) & (-0.31,-0.26) & 
+(0.00056,0.00072) \\ 
+Subsampling-r & (-0.32,-0.24) & (0.00017,0.00036) & (-0.30,-0.26) & 
+(0.00058,0.00070) \\ \hline
 \end{tabular}
 
+\begin{center}
+%TCIMACRO{%
+%\TeXButton{tab }{\begin{center}
+%\begin{table}[h] \centering
+%
+%% enter a full path to the file contain a tabular environmenet
+%\input{\pwd }
+%
+%% enter a caption
+%\caption{}
+%\vspace{-5pt} % important to reduce white space and fit multiple tables onto same page
+%
+%% enter a marker that is the same as Encapsulated name
+%\label{tab }
+%
+%\end{table}
+%\end{center}}}%
+%BeginExpansion
+\begin{center}
+\begin{table}[h] \centering
+
+% enter a full path to the file contain a tabular environmenet
+\input{\pwd }
+
+% enter a caption
+\caption{}
+\vspace{-5pt} % important to reduce white space and fit multiple tables onto same page
+
+% enter a marker that is the same as Encapsulated name
+\label{tab }
+
+\end{table}
+\end{center}%
+%EndExpansion
+%TCIMACRO{%
+%\TeXButton{B}{\begin{center}
+%\begin{table}[h] \centering}}%
+%BeginExpansion
+\begin{center}
+\begin{table}[h] \centering%
+%EndExpansion
+\begin{tabular}{ll}
+\hline
+Variable & Unit \\ \hline
+Potential evapotranspiration (PET) anomaly (atmospheric demand) & mm \\ 
+Top soil moisture layer anomaly (0-10 cm) & mm \\ 
+Deep soil moisture layer anomaly (100- 500 cm) & mm \\ 
+Mean cattle density &  \\ 
+Top Soil moisture layer trend & mm month$^{-1}$ \\ 
+Deep Soil moisture layer trend & mm month$^{-1}$ \\ 
+Potential evapotranspiration (PET) trend (atmospheric demand) & mm month$%
+^{-1}$ \\ 
+Ratio of C3 to C4 grasses &  \\ 
+Woody vegetation cover proportion &  \\ 
+Dryland agriculture proportion &  \\ 
+Irrigated agriculture proportion &  \\ \hline
+\end{tabular}%
+\caption{}\label{tab}%
+%TCIMACRO{%
+%\TeXButton{E}{\end{table}
+%\end{center}}}%
+%BeginExpansion
+\end{table}
+\end{center}%
+%EndExpansion
+\end{center}
 
 \end{document}
