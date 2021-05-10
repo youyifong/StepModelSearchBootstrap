@@ -13,8 +13,8 @@ if (length(Args)==0) {
     #   stepcon2 defines step as I(x>=e)
     # sim.setting: logistic1_unif_1000
     # hinge_unif_1000 is not step, but is used as a control for studying convergence rate
-    # fit.setting: B1_B2
-    Args=c(batch.size="2",batch.number="1",sim.setting="thresholded_unif_250",fit.setting="1000_50",proj="step_cvg_subsamplingd") 
+    # fit.setting: B1_B2 for double bootstrap or empty string for rule of thumb
+    Args=c(batch.size="2",batch.number="1",sim.setting="thresholded_unif_250",fit.setting="200_50",proj="step_cvg_subsampling") 
 }
 myprint(Args)
 i=0;
@@ -32,13 +32,18 @@ x.distr=tmp[[1]][2]
 n=as.numeric(tmp[[1]][3])
 # fit.setting
 tmp = strsplit(fit.setting, "_")
-B1=as.integer(tmp[[1]][1])    
-B2=as.integer(tmp[[1]][2])    
+if(length(tmp[[1]])==1) {
+    use.rule=T
+} else {
+    use.rule=F
+    B1=as.integer(tmp[[1]][1])    
+    B2=as.integer(tmp[[1]][2])    
+}
 # additional params
 verbose=ifelse(unix(),0,2)
 plot=F
 seed=1 
-myprint(label, x.distr,n,B2)
+myprint(label, x.distr,n)
 
 begin=Sys.time()
 res=
@@ -68,20 +73,30 @@ sapply(seeds, simplify="array", function (seed) {
     
     fit.0=chngptm(formula.1=Y~z, formula.2=~x, family="gaussian", dat, type="step", est.method="fastgrid2", var.type="none", verbose=verbose)
     
-    mm=as.integer(seq(n/5, n*4/5, length=21))
-    
-    out=sapply(1:B1, function(b) {
-        set.seed(b)
-        dat.b=dat[sample(n, replace=T),]
-        sapply(mm, function(m) {
-            fit.b=chngptm(formula.1=Y~z, formula.2=~x, dat.b, type="step", family="gaussian", est.method="fastgrid2", var.type="bootstrap", subsampling=m, ci.bootstrap.size=B2, ncpus=1)
-            tmp=fit.b$vcov$perc[,"chngpt"]
-            unname(tmp[1]<fit.0$chngpt & fit.0$chngpt<tmp[2])
+    if(!use.rule) {
+        mm=as.integer(seq(n/20, n*4/5, length=25))
+        
+        out=sapply(1:B1, function(b) {
+            set.seed(b)
+            dat.b=dat[sample(n, replace=T),]
+            sapply(mm, function(m) {
+                fit.b=chngptm(formula.1=Y~z, formula.2=~x, dat.b, type="step", family="gaussian", est.method="fastgrid2", var.type="bootstrap", subsampling=m, ci.bootstrap.size=B2, ncpus=1)
+                tmp=fit.b$vcov$perc[,"chngpt"]
+                unname(tmp[1]<fit.0$chngpt & fit.0$chngpt<tmp[2])
+            })
         })
-    })
-    cvg = apply(out, 1, mean)
-    k=which(cvg<.95)[1]
-    m = as.integer(mm[k-1] + (0.95-cvg[k-1])/((cvg[k-1]-cvg[k])/(mm[k-1]-mm[k])))
+        cvg = apply(out, 1, mean)
+        k=which(cvg<.95)[1]
+        m = as.integer(mm[k-1] + (0.95-cvg[k-1])/((cvg[k-1]-cvg[k])/(mm[k-1]-mm[k])))
+        if (length(m)==0) return (matrix(NA, length(fit.0$coefficients), 14)) #
+        
+    } else {
+        if (label=="thresholded") {
+            m=as.integer(exp(-0.9207 + 0.9804*log(n))) 
+        } else {
+            m=as.integer(exp(-0.5565 + 0.9961*log(n)))
+        }
+    }
     myprint(m)
     
     fit.chngpt=chngptm(formula.1=Y~z, formula.2=~x, family="gaussian", dat, type="step", est.method="fastgrid2", var.type="bootstrap", 

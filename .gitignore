@@ -1,2 +1,7 @@
 
 .DS_Store
+tables/subsampling_block_size.log
+tables/subsampling_block_size.pdf
+tables/subsampling_cvg.aux
+tables/subsampling_cvg.log
+tables/subsampling_cvg.pdf
