@@ -14,7 +14,7 @@ if (length(Args)==0) {
     # sim.setting: logistic1_unif_1000
     # hinge_unif_1000 is not step, but is used as a control for studying convergence rate
     # fit.setting: B1_B2 for double bootstrap or empty string for rule of thumb
-    Args=c(batch.size="2",batch.number="1",sim.setting="thresholded_unif_250",fit.setting="200_50",proj="step_cvg_subsampling") 
+    Args=c(batch.size="2",batch.number="1",sim.setting="sigmoid5_unif_2000",fit.setting="200_50",proj="step_cvg_subsampling") 
 }
 myprint(Args)
 i=0;
@@ -42,7 +42,7 @@ if(length(tmp[[1]])==1) {
 # additional params
 verbose=ifelse(unix(),0,2)
 plot=F
-seed=1 
+seed=1147 
 myprint(label, x.distr,n)
 
 begin=Sys.time()
@@ -53,22 +53,25 @@ sapply(seeds, simplify="array", function (seed) {
     
     coef.X <- as.matrix(c(1,log(1.4),-log(.67))) 
     
-    if (label=="thresholded")  {
+    if (label=="thresholded") {
         dat <- sim.step(threshold.type="step",X.ditr = "unif",thres=4.7,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
         coef.0=c(coef.X, 4.7); names(coef.0)=c("(Intercept)","z","x.gt.e","e")
-#    } else if (label=="quadratic")  {
-#        dat=sim.chngpt(label, n=n, seed=seed, x.distr=x.distr, family="gaussian") 
-#        if(x.distr=="lin") coef.0=c(-0.3192, 0.3362, 5.508, 5.436) # mean of 10 simulations at n=1e7, run with quad_coef0.R
-#        
-#    } else if (label=="hinge")  {
-#        dat=sim.chngpt("thresholded", threshold.type=label, x.distr=x.distr, family="gaussian", n=n, seed=seed, beta=-log(.67), alpha=1, coef.z=coef.z); #plot(y~x, dat)
-#        
-#    } else if (startsWith(label,"logistic"))  {
-#        logistic.slope=as.numeric(substr(label,9,100))
-#        # mimic Banerjee and McKeague 
-#        dat=sim.chngpt(substr(label,1,8), n=n, seed=seed, x.distr=x.distr, family="gaussian", sd.x=1/4, mu.x=1/2, sd=sqrt(0.25), logistic.slope=logistic.slope, coef.z=coef.z)  # plot(y~x, dat)
-#    } else if (label=="quadratic")  {
-#        dat=sim.chngpt("quadratic", x.distr=x.distr, family="gaussian", n=n, seed=seed, beta=-log(.67), alpha=1, coef.z=coef.z); 
+    
+    } else if (startsWith(label, "sigmoid")) {
+        shape=as.integer(sub("sigmoid","",label))
+        dat<-sim.step(threshold.type="sigmoid",X.ditr ="unif",thres=4.7,shape=shape,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+        if (shape==1) {
+            coef.0=c(1.081, log(1.4),0.237, 4.7) 
+        } else if (shape==5) {
+            coef.0=c(1.017,0.336,0.366,4.7) 
+        } else if (shape==15) {
+            coef.0=c(1.006, 0.336, 0.389, 4.7) 
+        } else stop("wrong shape")
+        
+    } else if (label=="quadratic") {
+        dat<-sim.step(threshold.type="quadratic",X.ditr = "unif",thres=4.7,mu.x=4.7,sd.x=1.4,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+        coef.0=c(-0.316, 0.336, 5.512, 5.441) 
+        
     } else stop("wrong label")
     
     fit.0=chngptm(formula.1=Y~z, formula.2=~x, family="gaussian", dat, type="step", est.method="fastgrid2", var.type="none", verbose=verbose)

@@ -5,3 +5,8 @@ tables/subsampling_block_size.pdf
 tables/subsampling_cvg.aux
 tables/subsampling_cvg.log
 tables/subsampling_cvg.pdf
+*.aaa
+*.log
+*.aux
+tables/rule_m_cvg.pdf
+tables/dbl_m_cvg.pdf

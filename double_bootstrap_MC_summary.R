@@ -1,55 +1,99 @@
-###########################################################
-# convergence rate estiamtes for simulation in Banerjee and McKeague
 library(kyotil)
-
+nn=c(250, 500, 1000, 1500)
+labels=c("thresholded", "sigmoid15", "sigmoid5", "sigmoid1", "quadratic")
+names.l=c("thresholded"="Step", "sigmoid15"="Sig\\_15", "sigmoid5"="Sig\\_5", "sigmoid1"="Sig\\_1", "quadratic"="Quad")
+BB=c("_200_200", "_r"); names(BB)=BB  # results from _1000_200 similar to _200_200
 proj="step_cvg_subsampling"
 x.distr="unif"
-label="thresholded"    
 
-# coverage table
-nn=c(250, 500, 1000)
-BB=c("_200_200", "_r")  # results from _1000_200 similar to _200_200
 
-tab=mysapply(nn, function(n) {
-    settings=paste0(label,"_",x.distr,"_",n,BB); 
-    names(settings)=settings
-    reses=sapply (settings, simplify="array", function(sim.setting) {
-        res=get.sim.res(paste0("res_",proj,"/",sim.setting), verbose=1)
-        apply(res, c(1,2), mean)
+###################################################################################################
+# coverage and m for e
+
+tabs=lapply (BB, function(BB1) {
+    tmp=lapply(labels, function(label) {   
+        mysapply(nn, function(n) {
+            settings=paste0(label,"_",x.distr,"_",n,BB1); 
+            names(settings)=settings
+            reses=sapply (settings, simplify="array", function(sim.setting) {
+                res=get.sim.res(paste0("res_",proj,"/",sim.setting), verbose=1)
+                #print(apply(res, c(1,2), function(x) sum(is.na(x)))) # check numbers of NA
+                c(apply(res, c(1,2), mean, na.rm=T)["chngpt", c("covered.bootstrap.perc","sd.bootstrap.perc")], m=mean(res[1,"m",], na.rm=T))
+            })
+            rbind(formatDouble(reses["m",], 0), paste0(
+                   formatDouble(100*reses["covered.bootstrap.perc",], 1), 
+                   " (",
+                   formatDouble(2*1.96*reses["sd.bootstrap.perc",], 2), 
+                   ")")
+            )
+        })
     })
-    
-    param.order=c("chngpt", "x>chngpt", "(Intercept)", "z")
-    paste0(t(formatDouble(100*reses[param.order,"covered.bootstrap.perc",], 1)), " (", t(formatDouble(reses[param.order,"sd.bootstrap.perc",]*2*1.96, 2)), ")"); 
+    do.call(cbind, tmp)
 })
-tab
 
-mytex(tab, file="tables/subsampling_cvg",     col.headers=paste0("\\hline\n 
+
+for (BB1 in BB) {
+    mytex(tabs[[BB1]], file=paste0("tables/",ifelse(BB1=="_r","rule","dbl"),"_m_cvg"), include.colnames=F, align="c",
+        col.headers=paste0("\\toprule\n 
+           ",  concatList("& \\multicolumn{2}{c}{"%.%names.l[labels]%.%"}"), " \\\\ 
+             \\cmidrule(l{2pt}r{2pt}){2-3} \\cmidrule(l{2pt}r{2pt}){4-5} \\cmidrule(l{2pt}r{2pt}){6-7} \\cmidrule(l{2pt}r{2pt}){8-9}  \\cmidrule(l{2pt}r{2pt}){10-11} 
+             \\multicolumn{1}{c}{$n$} ",  concatList(rep("& \\multicolumn{1}{c}{m}& \\multicolumn{1}{c}{cvg (width)}", length(labels))), " \\\\ \\midrule 
+        ")
+    )
+}
+
+
+
+###################################################################################################
+# coverage for all parameters
+
+tabs=lapply(labels, function(label) {   
+    tab=mysapply(nn, function(n) {
+        settings=paste0(label,"_",x.distr,"_",n,BB); 
+        names(settings)=settings
+        reses=sapply (settings, simplify="array", function(sim.setting) {
+            res=get.sim.res(paste0("res_",proj,"/",sim.setting), verbose=1)
+            #print(apply(res, c(1,2), function(x) sum(is.na(x)))) # check numbers of NA
+            apply(res, c(1,2), mean, na.rm=T)
+        })
+        
+        param.order=c("chngpt", "x>chngpt", "(Intercept)", "z")
+        paste0(t(formatDouble(100*reses[param.order,"covered.bootstrap.perc",], 1)), " (", t(formatDouble(reses[param.order,"sd.bootstrap.perc",]*2*1.96, 2)), ")"); 
+    })
+    tab
+})
+tab=do.call(rbind, tabs)
+
+mytex(tab, file="tables/subsampling_cvg", include.colnames=F,
+    col.headers=paste0("\\hline\n 
        &  \\multicolumn{2}{c}{$e$}    & \\multicolumn{2}{c}{$\\beta$}  & \\multicolumn{2}{c}{$\\alpha$}  & \\multicolumn{2}{c}{$\\alpha_z$} \\\\ 
-          \\cmidrule(l{2pt}r{2pt}){2-3} \\cmidrule(l{2pt}r{2pt}){4-5} \\cmidrule(l{2pt}r{2pt}){6-7} \\cmidrule(l{2pt}r{2pt}){8-9} 
          \\multicolumn{1}{c}{$n$} ",  concatList(rep("& \\multicolumn{1}{c}{DBL}& \\multicolumn{1}{c}{Rule}", 4)), " \\\\ \\hline
-    "), include.colnames=F
+    "), 
+    add.to.row=list(list(0,length(nn),2*length(nn),3*length(nn),4*length(nn)), # insert at the beginning of table, and at the end of, say, the first table
+        "       \n \\multicolumn{9}{l}{"%.%labels%.%"} \\\\ \n"
+    )
 )
+#          \\cmidrule(l{2pt}r{2pt}){2-3} \\cmidrule(l{2pt}r{2pt}){4-5} \\cmidrule(l{2pt}r{2pt}){6-7} \\cmidrule(l{2pt}r{2pt}){8-9} 
 
 
 
+###################################################################################################
 # block size
-tab=mysapply(nn, function(n) {
-    settings=paste0(label,"_",x.distr,"_",n,BB); 
-    names(settings)=settings
-    # lapply works better than sapply if different numbers of seeds succeeded
-    mm=lapply (settings, function(sim.setting) {
-        res=get.sim.res(paste0("res_",proj,"/",sim.setting), verbose=1)
-        res[1,"m",]
+
+tabs=lapply(labels, function(label) {   
+    tab=mysapply(nn, function(n) {
+        settings=paste0(label,"_",x.distr,"_",n,BB); 
+        names(settings)=settings
+        # lapply works better than sapply if different numbers of seeds succeeded
+        mm=lapply (settings, function(sim.setting) {
+            res=get.sim.res(paste0("res_",proj,"/",sim.setting), verbose=1)
+            res[1,"m",]
+        })
+        summary(mm[[1]])
+        sapply(mm, function(x) mean(x, na.rm=T))    
     })
-    summary(mm[[1]])
-    sapply(mm, function(x) mean(x))    
 })
+tab=do.call(cbind, tabs)
 tab
 
-mytex(tab, file="tables/subsampling_block_size", digit=0
-    , col.headers=paste0("\\hline\n 
-%       &  \\multicolumn{2}{c}{$e$}    & \\multicolumn{2}{c}{$\\beta$}  & \\multicolumn{2}{c}{$\\alpha$}  & \\multicolumn{2}{c}{$\\alpha_z$} \\\\ 
-%          \\cmidrule(l{2pt}r{2pt}){2-3} \\cmidrule(l{2pt}r{2pt}){4-5} \\cmidrule(l{2pt}r{2pt}){6-7} \\cmidrule(l{2pt}r{2pt}){8-9} 
-         \\multicolumn{1}{c}{$n$} ",  concatList(rep("& \\multicolumn{1}{c}{DBL}& \\multicolumn{1}{c}{Rule}", 1)), " \\\\ \\hline
-    "), include.colnames=F
-)
+mytex(tab, file="tables/subsampling_block_size", digit=0)
