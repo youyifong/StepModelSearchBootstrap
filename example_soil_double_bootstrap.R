@@ -61,4 +61,6 @@ for (i in 2:1) {
     abline(h=.95, lty=2)
 }
 mydev.off(file="figures/example_soil_double_bootstrap_cvg")
-# m 1019, 1274
+# m 
+# with adjustment    1274 (dbl), 870 (rule)
+# without adjustment 1019 (dbl), 1417 (rule)

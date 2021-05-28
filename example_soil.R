@@ -134,6 +134,8 @@ tab=t(rbind(tabs[[2]], tabs[[1]]))[,c(2,1,4,3)]
 # add m
 #tab=cbind("$m$"=c(rep(NA,3),870,1274), tab[,1:2],  "$m$"=c(rep(NA,3),1417,1019), tab[,1:2+2])
 tab
+tab[4:5, c(2,4)]=NA # remove beta CI from subsampling
+tab=tab[c(1,3,5), ] # only show symmetric and rules-of-thumb
 
 mytex(tab, sanitize.text.function = identity, align="c", file="tables/soil_moisture",
     col.headers="  \\hline  &   \n \\multicolumn{"%.%(ncol(tab)/2)%.%"}{c}{With covariates adjustment} & \\multicolumn{"%.%(ncol(tab)/2)%.%"}{c}{Without covariates adjustment}\\\\ \n"
@@ -141,12 +143,10 @@ mytex(tab, sanitize.text.function = identity, align="c", file="tables/soil_moist
 
 
 
-
-
 # make a plot
 for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
-    myfigure(mfrow=c(1,4))
-    for(i in 1:4) { # left middle right 
+    myfigure(mfrow=c(1,2))
+    for(i in 1:2) { # from left to right 
         if(i==1) {
             fit=get("fit.gam.m111."%.%idx)
         } else if(i==2) {
@@ -175,19 +175,20 @@ for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
         # plot bootstrap replicates
         #for(i in 1:10) lines(out$xx, out$boot[,i]+offset, type="l")
         
+        col=1
         if (i==1) {
-            lines(out$xx, out$yy+offset, lwd=2, col=2)
-            #lines(out$xx, out$point.ci[1,]+offset, type="l", col=2, lty=2, lwd=1)
-            #lines(out$xx, out$point.ci[2,]+offset, type="l", col=2, lty=2, lwd=1)
+            lines(out$xx, out$yy+offset, lwd=2, col=col)
+            #lines(out$xx, out$point.ci[1,]+offset, type="l", col=col, lty=2, lwd=1)
+            #lines(out$xx, out$point.ci[2,]+offset, type="l", col=col, lty=2, lwd=1)
         } else  {
             # to plot discontinuous lines, we will do it in two steps
-            lines(out$xx[out$xx<=fit$chngpt], out$yy[out$xx<=fit$chngpt]+offset, lwd=2, col=2)
-            lines(out$xx[out$xx<=fit$chngpt], out$point.ci[1,out$xx<=fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-            lines(out$xx[out$xx<=fit$chngpt], out$point.ci[2,out$xx<=fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
+            lines(out$xx[out$xx<=fit$chngpt], out$yy[out$xx<=fit$chngpt]+offset, lwd=2, col=col)
+            lines(out$xx[out$xx<=fit$chngpt], out$point.ci[1,out$xx<=fit$chngpt]+offset, type="l", col=col, lty=2, lwd=1)
+            lines(out$xx[out$xx<=fit$chngpt], out$point.ci[2,out$xx<=fit$chngpt]+offset, type="l", col=col, lty=2, lwd=1)
             #
-            lines(out$xx[out$xx>fit$chngpt], out$yy[out$xx>fit$chngpt]+offset, lwd=2, col=2)
-            lines(out$xx[out$xx>fit$chngpt], out$point.ci[1,out$xx>fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
-            lines(out$xx[out$xx>fit$chngpt], out$point.ci[2,out$xx>fit$chngpt]+offset, type="l", col=2, lty=2, lwd=1)
+            lines(out$xx[out$xx>fit$chngpt], out$yy[out$xx>fit$chngpt]+offset, lwd=2, col=col)
+            lines(out$xx[out$xx>fit$chngpt], out$point.ci[1,out$xx>fit$chngpt]+offset, type="l", col=col, lty=2, lwd=1)
+            lines(out$xx[out$xx>fit$chngpt], out$point.ci[2,out$xx>fit$chngpt]+offset, type="l", col=col, lty=2, lwd=1)
         }
     }    
     mydev.off(file=paste0("figures/soil_moisture_threshold_model_fits_",ifelse(idx==1,"nootherpred","yesotherpred")))
