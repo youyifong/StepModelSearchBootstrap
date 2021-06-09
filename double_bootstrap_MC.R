@@ -85,7 +85,7 @@ sapply(seeds, simplify="array", function (seed) {
             sapply(mm, function(m) {
                 fit.b=chngptm(formula.1=Y~z, formula.2=~x, dat.b, type="step", family="gaussian", est.method="fastgrid2", var.type="bootstrap", subsampling=m, ci.bootstrap.size=B2, ncpus=1)
                 tmp=fit.b$vcov$perc[,"chngpt"]
-                unname(tmp[1]<fit.0$chngpt & fit.0$chngpt<tmp[2])
+                unname(tmp[1]<=fit.0$chngpt & fit.0$chngpt<=tmp[2]) # it is key to use = signs here
             })
         })
         cvg = apply(out, 1, mean)

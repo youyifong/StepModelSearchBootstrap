@@ -61,8 +61,11 @@ fit.gam.m111.2=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="M111"
 fit.gam.step.2.sub=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
     est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=as.integer(exp(-0.9207 + 0.9804*log(nrow(rdat)))) ) #870
 
+fit.gam.step.2.sub.1=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=as.integer(exp(-0.5565 + 0.9961*log(nrow(rdat)))) ) #1417
+
 fit.gam.step.2.sub.d=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=1274 ) # m estimated by double bootstrap
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=1881 ) # m estimated by double bootstrap
 
 
 
@@ -81,10 +84,10 @@ fit.gam.step.1.sub=chngptm(formula.1=f.1, formula.2=~midsoil_anom, rdat, type="s
     est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=as.integer(exp(-0.5565 + 0.9961*log(nrow(rdat)))) ) #1417
 
 fit.gam.step.1.sub.d=chngptm(formula.1=f.1, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
-    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=1019 )  # m estimated by double bootstrap
+    est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30, subsampling=1552 )  # m estimated by double bootstrap
 
 
-save(fit.gam.step.2, fit.gam.step.2.sub, fit.gam.m111.2, fit.gam.step.1, fit.gam.step.1.sub, fit.gam.m111.1, fit.gam.step.1.sub.d, fit.gam.step.2.sub.d, file="fit.gam.Rdata")
+save(fit.gam.step.2, fit.gam.step.2.sub, fit.gam.step.2.sub.1, fit.gam.m111.2, fit.gam.step.1, fit.gam.step.1.sub, fit.gam.m111.1, fit.gam.step.1.sub.d, fit.gam.step.2.sub.d, file="fit.gam.Rdata")
 
 
 stop() # if we run the above on a server to save the fits, we would stop here
@@ -94,14 +97,13 @@ stop() # if we run the above on a server to save the fits, we would stop here
 ###########################################################################################
 # summarize results
 
-
 load(file="fit.gam.Rdata")
-
 
 tabs=list()
 for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
     fit.symm=get("fit.gam.step."%.%idx)
     fit.sub =get("fit.gam.step."%.%idx%.%".sub")
+    if(idx==2) fit.sub1=get("fit.gam.step."%.%idx%.%".sub.1") else fit.sub1=fit.sub # fit.sub1 under idx 2 uses the rule of thumb for misspecified
     fit.subd=get("fit.gam.step."%.%idx%.%".sub.d")
     
     chngpt = cbind(
@@ -109,6 +111,7 @@ for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
         , symm = summary(fit.symm, boot.type="symm")$chngpt
         , subd = summary(fit.subd)$chngpt
         , sub  = summary(fit.sub)$chngpt
+        , sub1 = summary(fit.sub1)$chngpt
     )[c(1,3,4),]    
     tmp.1=formatDouble(chngpt, 2)
         
@@ -118,6 +121,7 @@ for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
         , symm = last(summary(fit.symm, boot.type="symm")$coef)
         , subd = last(summary(fit.subd)$coef)
         , sub  = last(summary(fit.sub)$coef)
+        , sub1 = last(summary(fit.sub1)$coef)
     )[c(1,3,4),]
     tmp.2=formatDouble(jump, 5, remove.leading0=F)
     
@@ -126,16 +130,16 @@ for(idx in 1:2) { # 1: no other predictors; 2: has other predictors
       ,
       "$e$"=c(tmp.1[1,1], paste0("(", tmp.1[2,], ",", tmp.1[3,], ")"))
     )
-    colnames(tab)=c("Point estimate", "Efron percentile", "Efron symmetric", "Subsampling-d", "Subsampling-r")
+    colnames(tab)=c("Point estimate", "Efron percentile", "Efron symmetric", "Subsampling-d", "Subsampling-r", "Subsampling-r")
     tabs[[idx]]=tab
 }
 
 tab=t(rbind(tabs[[2]], tabs[[1]]))[,c(2,1,4,3)]
 # add m
 #tab=cbind("$m$"=c(rep(NA,3),870,1274), tab[,1:2],  "$m$"=c(rep(NA,3),1417,1019), tab[,1:2+2])
+tab[4:6, c(2,4)]=NA # remove beta CI from subsampling
+tab=tab[c(1,3,4,5), ] # don't show percentile and the last row
 tab
-tab[4:5, c(2,4)]=NA # remove beta CI from subsampling
-tab=tab[c(1,3,5), ] # only show symmetric and rules-of-thumb
 
 mytex(tab, sanitize.text.function = identity, align="c", file="tables/soil_moisture",
     col.headers="  \\hline  &   \n \\multicolumn{"%.%(ncol(tab)/2)%.%"}{c}{With covariates adjustment} & \\multicolumn{"%.%(ncol(tab)/2)%.%"}{c}{Without covariates adjustment}\\\\ \n"
