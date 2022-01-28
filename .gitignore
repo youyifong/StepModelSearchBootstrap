@@ -10,3 +10,7 @@ tables/subsampling_cvg.pdf
 *.aux
 tables/rule_m_cvg.pdf
 tables/dbl_m_cvg.pdf
+.DS_Store
+.RData
+.Rhistory
+.RData

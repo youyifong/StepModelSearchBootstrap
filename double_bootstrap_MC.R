@@ -81,6 +81,7 @@ sapply(seeds, simplify="array", function (seed) {
         
         out=sapply(1:B1, function(b) {
             set.seed(b)
+            #print(b)
             dat.b=dat[sample(n, replace=T),]
             sapply(mm, function(m) {
                 fit.b=chngptm(formula.1=Y~z, formula.2=~x, dat.b, type="step", family="gaussian", est.method="fastgrid2", var.type="bootstrap", subsampling=m, ci.bootstrap.size=B2, ncpus=1)
