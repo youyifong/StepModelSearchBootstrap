@@ -1,7 +1,7 @@
 library(kyotil)
-nn=c(250, 500, 1000, 1500)
-#nn=c(250, 500, 1000, 1500, 2000)
+nn=c(250, 500, 1000, 1500, 2000)
 labels=c("thresholded", "sigmoid15", "sigmoid5", "sigmoid1", "quadratic")
+titles=c("Step", "Sig_15", "Sig_5", "Sig_1", "Quad")
 names.l=c("thresholded"="Step", "sigmoid15"="Sig\\_15", "sigmoid5"="Sig\\_5", "sigmoid1"="Sig\\_1", "quadratic"="Quad")
 BB=c("_200_200", "_r"); names(BB)=BB  # results from _1000_200 similar to _200_200
 proj="step_cvg_subsampling"
@@ -96,7 +96,10 @@ tabs=lapply(labels, function(label) {
         reses=sapply (settings, simplify="array", function(sim.setting) {
             res=get.sim.res(paste0("res_",proj,"/",sim.setting), verbose=1)
             #print(apply(res, c(1,2), function(x) sum(is.na(x)))) # check numbers of NA
-            apply(res, c(1,2), mean, na.rm=T)
+            out=cbind(covered.bootstrap.perc=apply(res, c(1,2), mean, na.rm=T)[,"covered.bootstrap.perc"],
+                      sd.bootstrap.perc     =apply(res, c(1,2), median, na.rm=T)[,"sd.bootstrap.perc"]
+            )
+            out
         })
         
         param.order=c("chngpt", "x>chngpt", "(Intercept)", "z")
@@ -112,7 +115,7 @@ mytex(tab, file="tables/subsampling_cvg", include.colnames=F,
          \\multicolumn{1}{c}{$n$} ",  concatList(rep("& \\multicolumn{1}{c}{DBL}& \\multicolumn{1}{c}{Rule}", 4)), " \\\\ \\hline
     "), 
     add.to.row=list(list(0,length(nn),2*length(nn),3*length(nn),4*length(nn)), # insert at the beginning of table, and at the end of, say, the first table
-        "       \n \\multicolumn{9}{l}{"%.%labels%.%"} \\\\ \n"
+        "       \n \\multicolumn{9}{l}{"%.%titles%.%"} \\\\ \n"
     )
 )
 #          \\cmidrule(l{2pt}r{2pt}){2-3} \\cmidrule(l{2pt}r{2pt}){4-5} \\cmidrule(l{2pt}r{2pt}){6-7} \\cmidrule(l{2pt}r{2pt}){8-9} 
