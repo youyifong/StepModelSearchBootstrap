@@ -1,7 +1,3 @@
-# MC for estimation
-# this is the new file and works with array res. the older copy is in archive
-# when adding a new sim.setting, e.g. thresholded, needs to update this file, coef.0.ls.R, and runscript file. Also make sure sim.alphas has the right entry or alpha is provided in call to sim.chngpt
-
 rm(list=ls())
 library(kyotil)
 library(chngpt)
@@ -10,7 +6,7 @@ library(moments)
 # process arguments
 Args <- commandArgs(trailingOnly=TRUE) 
 if (length(Args)==0) {
-    Args=c(batch.size="2",batch.number="1",sim.setting="250")  #,fit.setting="symm"
+    Args=c(batch.size="2",batch.number="1",sim.setting="sigmoid1_unif_200")  #,fit.setting="symm"
 }
 myprint(Args)
 i=0;
@@ -18,35 +14,51 @@ i=i+1; batch.size=as.numeric(Args[i])
 i=i+1; batch=as.numeric(Args[i])
 seeds=1:batch.size+batch.size*(batch-1); names(seeds)=seeds
 myprint(batch, batch.size)
-i=i+1; n=as.numeric(Args[i])
+# sim.setting
+i=i+1; sim.setting=Args[i]
+    tmp = strsplit(sim.setting, "_")
+    label=tmp[[1]][1]
+    x.distr=tmp[[1]][2]
+    n=as.numeric(tmp[[1]][3])
+
     
 source("sim.step.R")
+seed=1 # for testing
 #source("logistic.R")
-
-mu.X<-as.matrix(c(0,4.7)) # mean X =4.7, mean z=0
-cov.X <- diag(c(1^2,1.6^2)) # sd.z=1, sd.x=1.6
-coef.X <- as.matrix(c(1,log(1.4),-log(.67)))   # 0.34=log(1.4); 0.4005=-log(.67)
-#coef.X <- as.matrix(c(0,1))   # banejee
-#coef.0=c(1, log(1.4),-log(.67), 4.7) # step
-#coef.0=c(1.081, log(1.4),0.237, 4.7) # shape=1
-#coef.0=c(1.017,0.336,0.366,4.7) # shape=5
-coef.0=c(-0.316, 0.336, 5.512, 5.441) # quadratic
-#coef.0=c(1.006, 0.336, 0.389, 4.7) # shape=15
-#coef.0 <- as.matrix(c(0.092,0.816,0.5))   # banejee shape=15
-verbose=0
 
 begin=Sys.time()
 res=
 sapply(seeds, simplify="array", function (seed) {
-#seed=1
     myprint(seed)
     t.0=Sys.time()   
     
-    # put results in an object names out
-    #dat <- sim.step(threshold.type="sigmoid",X.ditr = "unif",thres=4.7,shape=1,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
-    ##dat <- sim.step(X.ditr = "banejee",thres=0.5,shape=15,mu.x=0.5,sd.x=0.25,mu.z=0,sd.z=0,coef.X=coef.X,eps.sd=0.5,seed=seed,n=n)
-    #dat <- sim.step(threshold.type="step",X.ditr = "unif",thres=4.7,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
-    dat <- sim.step(threshold.type="quadratic",X.ditr = "unif",thres=4.7,mu.x=4.7,sd.x=1.4,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+    mu.X<-as.matrix(c(0,4.7)) # mean X =4.7, mean z=0
+    cov.X <- diag(c(1^2,1.6^2)) # sd.z=1, sd.x=1.6
+    coef.X <- as.matrix(c(1,log(1.4),-log(.67)))   # 0.34=log(1.4); 0.4005=-log(.67)
+    verbose=0
+    
+    
+    if (label=="threshold") {
+        dat <- sim.step(threshold.type="step",X.ditr = "unif",thres=4.7,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+        coef.0=c(1, log(1.4),-log(.67), 4.7) # step
+    } else if (label=="quadratic") {
+        dat <- sim.step(threshold.type=label,X.ditr = "unif",thres=4.7,mu.x=4.7,sd.x=1.4,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+        coef.0=c(-0.316, 0.336, 5.512, 5.441) # quadratic
+    } else if (label=="sigmoid1") {
+        dat <- sim.step(threshold.type="sigmoid",X.ditr = "unif",thres=4.7,shape=1,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+        coef.0=c(1.081, log(1.4),0.237, 4.7) # shape=1
+    } else if (label=="sigmoid5") {
+        dat <- sim.step(threshold.type="sigmoid",X.ditr = "unif",thres=4.7,shape=5,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+        coef.0=c(1.017,0.336,0.366,4.7) # shape=5
+    } else if (label=="sigmoid15") {
+        dat <- sim.step(threshold.type="sigmoid",X.ditr = "unif",thres=4.7,shape=15,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+        coef.0=c(1.006, 0.336, 0.389, 4.7) # shape=15
+    } else if (label=="banejee") {
+        dat <- sim.step(X.ditr = label,thres=0.5,shape=15,mu.x=0.5,sd.x=0.25,mu.z=0,sd.z=0,coef.X=coef.X,eps.sd=0.5,seed=seed,n=n)
+        coef.X <- as.matrix(c(0,1))   # banejee
+#        coef.0 <- as.matrix(c(0.092,0.816,0.5))   # banejee shape=15
+    } else stop("unexpected label")
+    
     
     #### if steepness
     #fit.e=chngptm (formula.1=Y~z, formula.2=~x, dat, type="step", family="gaussian",
@@ -76,22 +88,22 @@ sapply(seeds, simplify="array", function (seed) {
     #             )
     out=matrix(fit$coefficients, ncol=1, dimnames=list(names(fit$coefficients), "est"))
     out=cbind(out
-              #sd.bootstrap.perc=apply(fit.chngpt$vcov$perc, 2, diff)/1.96/2
+              , wd.bootstrap.perc=apply(fit$vcov$perc, 2, diff)
               , covered.bootstrap.perc=  (coef.0>fit$vcov$perc[1,] & coef.0<fit$vcov$perc[2,])
               , lb.perc=fit$vcov$perc[1,]
               , ub.perc=fit$vcov$perc[2,]
               
-              #, sd.bootstrap.bc=apply(fit.chngpt$vcov$bc, 2, diff)/1.96/2
+              #, sd.bootstrap.bc=apply(fit$vcov$bc, 2, diff)/1.96/2
               #, covered.bootstrap.bc=  (coef.0>fit$vcov$bc[1,] & coef.0<fit$vcov$bc[2,])
               #, lb.bc=fit$vcov$bc[1,]
               #, ub.bc=fit$vcov$bc[2,]
               
-              #, sd.bootstrap.basic=apply(fit.chngpt$vcov$basic, 2, diff)/1.96/2, 
+              #, sd.bootstrap.basic=apply(fit$vcov$basic, 2, diff)/1.96/2, 
               #, covered.bootstrap.basic=  (coef.0>fit$vcov$basic[1,] & coef.0<fit$vcov$basic[2,])
               #, lb.basic=fit$vcov$basic[1,]
               #, ub.basic=fit$vcov$basic[2,]
               
-              #, sd.bootstrap.symm=apply(fit.chngpt$vcov$symm, 2, diff)/1.96/2
+              , wd.bootstrap.symm=apply(fit$vcov$symm, 2, diff)
               , covered.bootstrap.symm=  (coef.0>fit$vcov$symm[1,] & coef.0<fit$vcov$symm[2,])
               , lb.symm=fit$vcov$symm[1,]
               , ub.symm=fit$vcov$symm[2,]
@@ -112,8 +124,8 @@ names(dimnames(res))=c("stat","boot.type","seed")
 
 
 # save results
-foldername="res";                          if(!file.exists(foldername)) dir.create(foldername)
-foldername=paste0(foldername, "/n", n);    if(!file.exists(foldername)) dir.create(foldername)
+foldername="res_efron/";                          if(!file.exists(foldername)) dir.create(foldername)
+foldername=paste0(foldername, sim.setting);       if(!file.exists(foldername)) dir.create(foldername)
 save (res, file=foldername%.%"/batch"%.%formatInt(batch, 3)%.%".Rdata")
 # note time passed
 done = Sys.time()
