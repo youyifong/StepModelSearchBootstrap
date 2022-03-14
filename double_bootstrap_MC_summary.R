@@ -1,6 +1,6 @@
 library(kyotil)
 nn=c(250, 500, 1000, 1500, 2000)
-labels=c("thresholded", "sigmoid15", "sigmoid5", "sigmoid1", "quadratic")
+labels=c("threshold", "sigmoid15", "sigmoid5", "sigmoid1", "quadratic")
 titles=c("Step", "Sig_15", "Sig_5", "Sig_1", "Quad")
 names.l=c("thresholded"="Step", "sigmoid15"="Sig\\_15", "sigmoid5"="Sig\\_5", "sigmoid1"="Sig\\_1", "quadratic"="Quad")
 BB=c("_200_200", "_r"); names(BB)=BB  # results from _1000_200 similar to _200_200

@@ -46,6 +46,9 @@ f.2=EVItrend~evap_anom+I(evap_anom^2)+I(evap_anom^3)+I(evap_anom^4)+I(evap_anom^
 
 summary(lm(f.2, rdat))
 
+print(system.time(chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="step", family="gaussian", est.method="grid", var.type="bootstrap", verbose=1))) # for timing performance
+
+stop("end")
 
 par(mfrow=c(1,2))
     hist(rdat$ss_trend) # skewed (not obvious how to transform, even without scaling)
@@ -54,6 +57,7 @@ par(mfrow=c(1,2))
 
 fit.gam.step.2=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="step", family="gaussian",
     est.method="fastgrid2", var.type="bootstrap", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)
+
 
 fit.gam.m111.2=chngptm(formula.1=f.2, formula.2=~midsoil_anom, rdat, type="M111", family="gaussian",
     est.method="fastgrid2", var.type="none", save.boot=TRUE,verbose = 0, ci.bootstrap.size=510, ncpus=30)

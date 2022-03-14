@@ -1,0 +1,34 @@
+\documentclass{article}
+
+\usepackage{geometry}
+
+\begin{document}
+\begin{tabular}{lcccccc}
+   \toprule
+ 
+           & \multicolumn{2}{c}{Step}& \multicolumn{2}{c}{Sig\_5}& \multicolumn{2}{c}{Quad} \\ 
+             \cmidrule(l{2pt}r{2pt}){2-3} \cmidrule(l{2pt}r{2pt}){4-5} \cmidrule(l{2pt}r{2pt}){6-7} 
+             \multicolumn{1}{c}{$n$} & \multicolumn{1}{c}{m}& \multicolumn{1}{c}{cvg (width)}& \multicolumn{1}{c}{m}& \multicolumn{1}{c}{cvg (width)}& \multicolumn{1}{c}{m}& \multicolumn{1}{c}{cvg (width)} \\ \midrule 
+             \hline   
+ \multicolumn{7}{l}{Efron bootstrap} \\ 
+250 &  & 96.7 (.50) &  & 96.2 (.91) &  & 96.4 (.47) \\ 
+  500 &  & 96.8 (.24) &  & 96.7 (.63) &  & 96.2 (.35) \\ 
+  1000 &  & 96.3 (.12) &  & 96.6 (.46) &  & 96.5 (.26) \\ 
+  2000 &  & 96.3 (.06) &  & 96.9 (.35) &  & 96.3 (.20) \\ 
+       \hline   
+ \multicolumn{7}{l}{Subsampling DBL} \\ 
+250 & 109 & 98.0 (.77) & 129 & 96.6 (.99) & 126 & 96.8 (.56) \\ 
+  500 & 212 & 98.2 (.39) & 255 & 96.8 (.67) & 259 & 96.4 (.38) \\ 
+  1000 & 404 & 98.2 (.20) & 518 & 96.1 (.47) & 511 & 96.1 (.28) \\ 
+  2000 & 787 & 98.4 (.10) & 1047 & 96.1 (.36) & 1037 & 95.6 (.20) \\ 
+       \hline   
+ \multicolumn{7}{l}{Subsampling Rule} \\ 
+250 & 89 & 95.4 (.89) & 140 & 93.7 (.80) & 140 & 93.1 (.45) \\ 
+  500 & 176 & 94.9 (.43) & 279 & 94.8 (.57) & 279 & 93.8 (.33) \\ 
+  1000 & 347 & 95.3 (.21) & 557 & 95.0 (.42) & 557 & 94.8 (.25) \\ 
+  2000 & 686 & 94.6 (.10) & 1112 & 95.3 (.32) & 1112 & 94.3 (.19) \\ 
+   \hline
+\end{tabular}
+
+
+\end{document}

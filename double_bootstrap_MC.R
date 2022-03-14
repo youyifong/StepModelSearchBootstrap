@@ -1,3 +1,5 @@
+# when adding a new sim.setting, e.g. threshold, needs to update coef.0
+
 rm(list=ls())
 library(splines)
 library(kyotil)
@@ -26,10 +28,15 @@ i=i+1; sim.setting=Args[i]
 i=i+1; fit.setting=Args[i]
 i=i+1; proj=Args[i]
 # sim.setting
-tmp = strsplit(sim.setting, "_")
-label=tmp[[1]][1]
-x.distr=tmp[[1]][2]
-n=as.numeric(tmp[[1]][3])
+    tmp = strsplit(sim.setting, "_")
+    label=tmp[[1]][1]
+    x.distr=tmp[[1]][2]
+        if (x.distr=="t4") {
+            x.distr="unif"; error.df=4
+        } else {
+            error.df=Inf
+        }
+    n=as.numeric(tmp[[1]][3])
 # fit.setting
 tmp = strsplit(fit.setting, "_")
 if(length(tmp[[1]])==1) {
@@ -53,13 +60,13 @@ sapply(seeds, simplify="array", function (seed) {
     
     coef.X <- as.matrix(c(1,log(1.4),-log(.67))) 
     
-    if (label=="thresholded") {
-        dat <- sim.step(threshold.type="step",X.ditr = "unif",thres=4.7,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+    if (label=="threshold") {
+        dat <- sim.step(threshold.type="step",X.ditr = x.distr,thres=4.7,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n,error.df=error.df)
         coef.0=c(coef.X, 4.7); names(coef.0)=c("(Intercept)","z","x.gt.e","e")
     
     } else if (startsWith(label, "sigmoid")) {
         shape=as.integer(sub("sigmoid","",label))
-        dat<-sim.step(threshold.type="sigmoid",X.ditr ="unif",thres=4.7,shape=shape,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+        dat<-sim.step(threshold.type="sigmoid",X.ditr =x.distr,thres=4.7,shape=shape,mu.x=4.7,sd.x=1.6,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n,error.df=error.df)
         if (shape==1) {
             coef.0=c(1.081, log(1.4),0.237, 4.7) 
         } else if (shape==5) {
@@ -69,10 +76,41 @@ sapply(seeds, simplify="array", function (seed) {
         } else stop("wrong shape")
         
     } else if (label=="quadratic") {
-        dat<-sim.step(threshold.type="quadratic",X.ditr = "unif",thres=4.7,mu.x=4.7,sd.x=1.4,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n)
+        dat<-sim.step(threshold.type="quadratic",X.ditr = x.distr,thres=4.7,mu.x=4.7,sd.x=1.4,mu.z=0,sd.z=1,coef.X=coef.X,eps.sd=0.3,seed=seed,n=n,error.df=error.df)
         coef.0=c(-0.316, 0.336, 5.512, 5.441) 
         
     } else stop("wrong label")
+    
+    if (x.distr=="unifnc") {
+        if (label=="threshold") {
+            coef.0=c(1, log(1.4),-log(.67), 4.7) 
+        } else if (label=="quadratic") {
+            coef.0=c(2.1041083,   0.3355249,   8.0784386,   6.8224739) 
+        } else if (label=="sigmoid1") {
+            coef.0=c(1.1537995,   0.3363551,   0.2049244,   5.2701861) 
+        } else if (label=="sigmoid5") {
+            coef.0=c(1.0370159,   0.3363593,   0.3526970,   4.7239899) 
+        } else if (label=="sigmoid15") {
+            coef.0=c(1.0117925,   0.3363681,   0.3848575,   4.7033100) 
+        } else if (label=="banejee") {
+        } else stop("unexpected label")
+    }
+    
+    if (error.df==4) {
+        if (label=="threshold") {
+            coef.0=c(1, log(1.4),-log(.67), 4.7) 
+        } else if (label=="quadratic") {
+            coef.0=c(-0.3144396,   0.3360150,   5.5132552,   5.4434292) 
+        } else if (label=="sigmoid1") {
+            coef.0=c(1.0822876,   0.3360918,   0.2370370,   4.7) 
+        } else if (label=="sigmoid5") {
+            coef.0=c(1.0176646,   0.3361207,   0.3657100,   4.7) 
+        } else if (label=="sigmoid15") {
+            coef.0=c(1.0057883,   0.3361297,   0.3887835,   4.7) 
+        } else if (label=="banejee") {
+        } else stop("unexpected label")
+    }
+    
     
     fit.0=chngptm(formula.1=Y~z, formula.2=~x, family="gaussian", dat, type="step", est.method="fastgrid2", var.type="none", verbose=verbose)
     
@@ -95,7 +133,7 @@ sapply(seeds, simplify="array", function (seed) {
         if (length(m)==0) return (matrix(NA, length(fit.0$coefficients), 14)) #
         
     } else {
-        if (label=="thresholded") {
+        if (label=="threshold") {
             m=as.integer(exp(-0.9207 + 0.9804*log(n))) 
         } else {
             m=as.integer(exp(-0.5565 + 0.9961*log(n)))

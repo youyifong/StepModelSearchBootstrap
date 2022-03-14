@@ -1,6 +1,6 @@
 
 
-sim.step=function(threshold.type=c("sigmoid","step","quadratic"),X.ditr=c('norm',"unif"),thres='NA',shape="NA",mu.x,mu.z,sd.x,sd.z,coef.X,eps.sd,seed,n){
+sim.step=function(threshold.type=c("sigmoid","step","quadratic"),X.ditr=c('norm',"unif","unifnc"),thres='NA',shape="NA",mu.x,mu.z,sd.x,sd.z,coef.X,eps.sd,seed,n,error.df=Inf){
   mu.X<-as.matrix(c(mu.z,mu.x)) # mean X =4.7, mean z=0
   cov.X <- diag(c(sd.z^2,sd.x^2)) # sd.z=1, sd.x=1.6
   npar=length(mu.X) # X including Z and x, it is a vector. If npar=8, x is the 8th, z are 1-7
@@ -14,35 +14,36 @@ sim.step=function(threshold.type=c("sigmoid","step","quadratic"),X.ditr=c('norm'
       e <- thres
       xe<-ifelse(x>e,1,0)
       Xe <- cbind(1,z,xe) # Z including 1 and z # Xe including (1,z,xe) 
-      Y=Xe %*% beta+rnorm(n,0,eps.sd)
+      Y=Xe %*% beta+if(error.df==Inf) rnorm(n,0,eps.sd) else rt(n,4)/sqrt(2)*eps.sd
     } else if (threshold.type=="sigmoid"){
       x.new <- exp(shape * (x-thres))/(1+exp(shape * (x-thres)))
       Xe <- cbind(1,z,x.new)
-      Y <- Xe %*% beta+rnorm(n,0,eps.sd)
+      Y <- Xe %*% beta+if(error.df==Inf) rnorm(n,0,eps.sd) else rt(n,4)/sqrt(2)*eps.sd
     }
     dat=data.frame(Y,z,x)
     return(dat)
-  } else if (X.ditr=="unif"){
+  } else if (X.ditr %in% c("unif","unifnc")){
     x=runif(n)*4*sd.x + mu.x-2*sd.x # (0,6.4)+1.5=uniform (1.5,7.9), mid: 4.7 sd.x=1.6
+    if(X.ditr == "unifnc") x=x+1.6
     z=rnorm(n, mean=mu.z, sd=sd.z)
     if(threshold.type=='step'){
       e <- thres
       xe<-ifelse(x>e,1,0)
       Xe <- cbind(1,z,xe) # Z including 1 and z # Xe including (1,z,xe)
-      Y=Xe %*% beta+rnorm(n,0,eps.sd)
+      Y=Xe %*% beta+if(error.df==Inf) rnorm(n,0,eps.sd) else rt(n,4)/sqrt(2)*eps.sd
     } else if (threshold.type=="sigmoid"){
       x.new <- exp(shape * (x-thres))/(1+exp(shape * (x-thres)))
       Xe <- cbind(1,z,x.new)
-      Y <- Xe %*% beta+rnorm(n,0,eps.sd)
+      Y <- Xe %*% beta+if(error.df==Inf) rnorm(n,0,eps.sd) else rt(n,4)/sqrt(2)*eps.sd
     } else if (threshold.type=="quadratic"){
       x.quad <- x*x
       Xe <- cbind(1,z,x,x.quad)
       beta.quad <- as.matrix(c(-1,log(1.4),-1,0.3))
-      Y <- Xe %*% beta.quad+rnorm(n,0,eps.sd)
+      Y <- Xe %*% beta.quad+if(error.df==Inf) rnorm(n,0,eps.sd) else rt(n,4)/sqrt(2)*eps.sd
     }
     dat=data.frame(Y,z,x)
     return(dat)
-  }
+  } else stop("wrong X.distr")
 }
 
 
